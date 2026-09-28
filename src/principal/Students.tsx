@@ -1,13 +1,16 @@
 import {
-  FormEvent,
   useEffect,
   useMemo,
   useState,
 } from "react";
 
+import type {
+  FormEvent,
+} from "react";
+
 import {
-  collection,
   addDoc,
+  collection,
   deleteDoc,
   doc,
   getDocs,
@@ -19,8 +22,11 @@ import {
 
 import {
   ArrowLeft,
+  CalendarDays,
   Edit3,
+  GraduationCap,
   Plus,
+  RefreshCw,
   Save,
   Search,
   Trash2,
@@ -35,10 +41,7 @@ import {
 } from "react-router-dom";
 
 import { db } from "../firebase/firebase";
-
-import {
-  getSession,
-} from "../utils/session";
+import { getSession } from "../utils/session";
 
 
 /* =========================================================
@@ -65,6 +68,8 @@ interface Student {
   parentName: string;
   mobile: string;
   address: string;
+
+  createdBy: string;
 }
 
 
@@ -81,7 +86,11 @@ interface StudentForm {
 }
 
 
-const emptyForm: StudentForm = {
+/* =========================================================
+   DEFAULT FORM
+========================================================= */
+
+const initialForm: StudentForm = {
   name: "",
   dob: "",
   gender: "",
@@ -95,7 +104,27 @@ const emptyForm: StudentForm = {
 
 
 /* =========================================================
-   AGE CALCULATOR
+   CLASS OPTIONS
+========================================================= */
+
+const classOptions = [
+  "1",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "10",
+  "11",
+  "12",
+];
+
+
+/* =========================================================
+   AGE CALCULATION
 ========================================================= */
 
 function calculateAge(
@@ -106,19 +135,32 @@ function calculateAge(
     return 0;
   }
 
+
   const birthDate =
     new Date(dob);
 
   const today =
     new Date();
 
+
+  if (
+    Number.isNaN(
+      birthDate.getTime()
+    )
+  ) {
+    return 0;
+  }
+
+
   let age =
     today.getFullYear() -
     birthDate.getFullYear();
 
+
   const monthDifference =
     today.getMonth() -
     birthDate.getMonth();
+
 
   if (
     monthDifference < 0 ||
@@ -131,7 +173,11 @@ function calculateAge(
     age--;
   }
 
-  return Math.max(age, 0);
+
+  return Math.max(
+    age,
+    0
+  );
 }
 
 
@@ -144,40 +190,78 @@ export default function Students() {
   const navigate =
     useNavigate();
 
+
   const session =
     getSession();
 
 
-  const [students, setStudents] =
-    useState<Student[]>([]);
+  /* =======================================================
+     STATE
+  ======================================================= */
 
-  const [form, setForm] =
-    useState<StudentForm>(
-      emptyForm
-    );
-
-  const [editingId, setEditingId] =
-    useState<string | null>(null);
-
-  const [search, setSearch] =
-    useState("");
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const [saving, setSaving] =
-    useState(false);
-
-  const [showForm, setShowForm] =
-    useState(false);
-
-  const [message, setMessage] =
-    useState("");
+  const [
+    students,
+    setStudents,
+  ] = useState<Student[]>([]);
 
 
-  /* =========================================================
-     AUTHORIZATION
-  ========================================================= */
+  const [
+    form,
+    setForm,
+  ] = useState<StudentForm>(
+    initialForm
+  );
+
+
+  const [
+    loading,
+    setLoading,
+  ] = useState(true);
+
+
+  const [
+    saving,
+    setSaving,
+  ] = useState(false);
+
+
+  const [
+    search,
+    setSearch,
+  ] = useState("");
+
+
+  const [
+    showForm,
+    setShowForm,
+  ] = useState(false);
+
+
+  const [
+    editingId,
+    setEditingId,
+  ] = useState<string | null>(
+    null
+  );
+
+
+  const [
+    message,
+    setMessage,
+  ] = useState("");
+
+
+  const [
+    messageType,
+    setMessageType,
+  ] = useState<
+    "success" | "error"
+  >("success");
+
+
+  /* =======================================================
+     PRINCIPAL AUTH CHECK
+  ======================================================= */
 
   useEffect(() => {
 
@@ -204,9 +288,9 @@ export default function Students() {
   ]);
 
 
-  /* =========================================================
-     LOAD ONLY PRINCIPAL'S SCHOOL
-  ========================================================= */
+  /* =======================================================
+     LOAD STUDENTS
+  ======================================================= */
 
   const loadStudents =
     async () => {
@@ -219,13 +303,17 @@ export default function Students() {
         return;
       }
 
+
       try {
 
         setLoading(true);
 
+        setMessage("");
+
 
         const studentQuery =
           query(
+
             collection(
               db,
               "students"
@@ -238,6 +326,7 @@ export default function Students() {
                 session.schoolId
               )
             )
+
           );
 
 
@@ -253,6 +342,7 @@ export default function Students() {
 
               const data =
                 studentDocument.data();
+
 
               return {
 
@@ -286,8 +376,8 @@ export default function Students() {
 
                 age:
                   Number(
-                    data.age
-                  ) || 0,
+                    data.age || 0
+                  ),
 
                 gender:
                   String(
@@ -306,7 +396,8 @@ export default function Students() {
 
                 admissionNumber:
                   String(
-                    data.admissionNumber || ""
+                    data.admissionNumber ||
+                    ""
                   ),
 
                 parentName:
@@ -324,26 +415,75 @@ export default function Students() {
                     data.address || ""
                   ),
 
+                createdBy:
+                  String(
+                    data.createdBy || ""
+                  ),
+
               };
 
             }
           );
 
 
+        /*
+          Sort by Class and
+          Roll Number
+        */
+
         records.sort(
           (a, b) => {
 
-            const classDifference =
-              Number(a.className) -
-              Number(b.className);
+            const classA =
+              Number(
+                a.className
+              ) || 0;
 
-            if (classDifference !== 0) {
-              return classDifference;
+            const classB =
+              Number(
+                b.className
+              ) || 0;
+
+
+            if (
+              classA !== classB
+            ) {
+
+              return (
+                classA -
+                classB
+              );
+
             }
 
+
+            const rollA =
+              Number(
+                a.rollNumber
+              ) || 0;
+
+            const rollB =
+              Number(
+                b.rollNumber
+              ) || 0;
+
+
+            if (
+              rollA !== rollB
+            ) {
+
+              return (
+                rollA -
+                rollB
+              );
+
+            }
+
+
             return (
-              Number(a.rollNumber) -
-              Number(b.rollNumber)
+              a.name.localeCompare(
+                b.name
+              )
             );
 
           }
@@ -363,8 +503,13 @@ export default function Students() {
           error
         );
 
+
+        setMessageType(
+          "error"
+        );
+
         setMessage(
-          "Student data load nahi ho saka."
+          "Student records load nahi ho sake."
         );
 
       }
@@ -378,42 +523,276 @@ export default function Students() {
     };
 
 
+  /* =======================================================
+     INITIAL LOAD
+  ======================================================= */
+
   useEffect(() => {
 
-    loadStudents();
+    if (
+      session?.role ===
+        "principal" &&
+      session?.schoolId
+    ) {
+
+      loadStudents();
+
+    }
 
   }, [
+    session?.id,
+    session?.role,
     session?.schoolId,
   ]);
 
 
-  /* =========================================================
-     INPUT
-  ========================================================= */
+  /* =======================================================
+     INPUT CHANGE
+  ======================================================= */
 
-  const handleInput =
-    (
-      field: keyof StudentForm,
-      value: string
-    ) => {
+  const handleChange = (
+    field: keyof StudentForm,
+    value: string
+  ) => {
+
+    setForm(
+      (previous) => ({
+        ...previous,
+        [field]: value,
+      })
+    );
+
+  };
+
+
+  /* =======================================================
+     RESET FORM
+  ======================================================= */
+
+  const resetForm = () => {
+
+    setForm(
+      initialForm
+    );
+
+    setEditingId(
+      null
+    );
+
+    setShowForm(
+      false
+    );
+
+  };
+
+
+  /* =======================================================
+     ADD STUDENT
+  ======================================================= */
+
+  const openAddStudent =
+    () => {
+
+      setMessage("");
+
+      setEditingId(
+        null
+      );
 
       setForm(
-        (previous) => ({
-          ...previous,
-          [field]: value,
-        })
+        initialForm
+      );
+
+      setShowForm(
+        true
       );
 
     };
 
 
-  /* =========================================================
+  /* =======================================================
+     EDIT STUDENT
+  ======================================================= */
+
+  const handleEdit = (
+    student: Student
+  ) => {
+
+    /*
+      Extra safety check:
+      Principal should edit
+      only own school student.
+    */
+
+    if (
+      String(
+        student.schoolId
+      ) !==
+      String(
+        session?.schoolId
+      )
+    ) {
+
+      setMessageType(
+        "error"
+      );
+
+      setMessage(
+        "You cannot edit another school's student."
+      );
+
+      return;
+
+    }
+
+
+    setEditingId(
+      student.id
+    );
+
+
+    setForm({
+
+      name:
+        student.name,
+
+      dob:
+        student.dob,
+
+      gender:
+        student.gender,
+
+      className:
+        student.className,
+
+      rollNumber:
+        student.rollNumber,
+
+      admissionNumber:
+        student.admissionNumber,
+
+      parentName:
+        student.parentName,
+
+      mobile:
+        student.mobile,
+
+      address:
+        student.address,
+
+    });
+
+
+    setMessage("");
+
+    setShowForm(
+      true
+    );
+
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+
+  };
+
+
+  /* =======================================================
+     VALIDATION
+  ======================================================= */
+
+  const validateForm =
+    (): string | null => {
+
+      if (
+        form.name.trim().length <
+        2
+      ) {
+
+        return (
+          "Student name enter karo."
+        );
+
+      }
+
+
+      if (!form.dob) {
+
+        return (
+          "Date of Birth select karo."
+        );
+
+      }
+
+
+      const selectedDOB =
+        new Date(
+          form.dob
+        );
+
+
+      const today =
+        new Date();
+
+
+      if (
+        selectedDOB >
+        today
+      ) {
+
+        return (
+          "Date of Birth future date nahi ho sakti."
+        );
+
+      }
+
+
+      if (!form.gender) {
+
+        return (
+          "Gender select karo."
+        );
+
+      }
+
+
+      if (!form.className) {
+
+        return (
+          "Class select karo."
+        );
+
+      }
+
+
+      if (
+        form.mobile.trim() &&
+        !/^[6-9]\d{9}$/.test(
+          form.mobile.trim()
+        )
+      ) {
+
+        return (
+          "Valid 10 digit mobile number enter karo."
+        );
+
+      }
+
+
+      return null;
+
+    };
+
+
+  /* =======================================================
      SAVE STUDENT
-  ========================================================= */
+  ======================================================= */
 
   const handleSubmit =
     async (
-      event: FormEvent
+      event:
+        FormEvent<HTMLFormElement>
     ) => {
 
       event.preventDefault();
@@ -421,47 +800,56 @@ export default function Students() {
 
       if (
         !session ||
-        session.role !== "principal" ||
+        session.role !==
+          "principal" ||
         !session.schoolId
       ) {
-        return;
-      }
 
-
-      if (
-        !form.name.trim() ||
-        !form.dob ||
-        !form.gender ||
-        !form.className
-      ) {
+        setMessageType(
+          "error"
+        );
 
         setMessage(
-          "Name, DOB, Gender aur Class required hai."
+          "Principal session not found."
         );
 
         return;
+
       }
 
 
+      const validationError =
+        validateForm();
+
+
       if (
-        form.mobile &&
-        !/^[6-9]\d{9}$/.test(
-          form.mobile
-        )
+        validationError
       ) {
 
+        setMessageType(
+          "error"
+        );
+
         setMessage(
-          "Valid 10 digit mobile number enter karein."
+          validationError
         );
 
         return;
+
       }
 
 
       try {
 
         setSaving(true);
+
         setMessage("");
+
+
+        const age =
+          calculateAge(
+            form.dob
+          );
 
 
         const studentData = {
@@ -472,10 +860,13 @@ export default function Students() {
             ),
 
           schoolName:
-            session.schoolName || "",
+            session.schoolName ||
+            "",
 
           udise:
-            session.udise || "",
+            session.udise ||
+            "",
+
 
           name:
             form.name.trim(),
@@ -483,10 +874,7 @@ export default function Students() {
           dob:
             form.dob,
 
-          age:
-            calculateAge(
-              form.dob
-            ),
+          age,
 
           gender:
             form.gender,
@@ -515,37 +903,82 @@ export default function Students() {
         };
 
 
-        /* UPDATE */
+        /* ===============================================
+           UPDATE
+        =============================================== */
 
-        if (editingId) {
+        if (
+          editingId
+        ) {
+
+          /*
+            Make sure record being edited
+            belongs to current Principal's
+            school.
+          */
+
+          const currentStudent =
+            students.find(
+              (student) =>
+                student.id ===
+                editingId
+            );
+
+
+          if (
+            !currentStudent ||
+            String(
+              currentStudent.schoolId
+            ) !==
+            String(
+              session.schoolId
+            )
+          ) {
+
+            throw new Error(
+              "Unauthorized student update."
+            );
+
+          }
+
 
           await updateDoc(
+
             doc(
               db,
               "students",
               editingId
             ),
+
             studentData
+
           );
 
 
+          setMessageType(
+            "success"
+          );
+
           setMessage(
-            "Student information updated successfully."
+            "Student information successfully updated."
           );
 
         }
 
-        /* CREATE */
+        /* ===============================================
+           CREATE
+        =============================================== */
 
         else {
 
           await addDoc(
+
             collection(
               db,
               "students"
             ),
-            {
 
+            {
               ...studentData,
 
               createdBy:
@@ -553,20 +986,28 @@ export default function Students() {
 
               createdAt:
                 serverTimestamp(),
-
             }
+
           );
 
 
+          setMessageType(
+            "success"
+          );
+
           setMessage(
-            "Student added successfully."
+            "Student successfully added."
           );
 
         }
 
 
+        /*
+          Close form
+        */
+
         setForm(
-          emptyForm
+          initialForm
         );
 
         setEditingId(
@@ -577,6 +1018,10 @@ export default function Students() {
           false
         );
 
+
+        /*
+          Refresh records
+        */
 
         await loadStudents();
 
@@ -589,8 +1034,13 @@ export default function Students() {
           error
         );
 
+
+        setMessageType(
+          "error"
+        );
+
         setMessage(
-          "Student save nahi ho saka."
+          "Student information save nahi ho saki."
         );
 
       }
@@ -604,96 +1054,59 @@ export default function Students() {
     };
 
 
-  /* =========================================================
-     EDIT
-  ========================================================= */
-
-  const handleEdit =
-    (
-      student: Student
-    ) => {
-
-      setEditingId(
-        student.id
-      );
-
-
-      setForm({
-
-        name:
-          student.name,
-
-        dob:
-          student.dob,
-
-        gender:
-          student.gender,
-
-        className:
-          student.className,
-
-        rollNumber:
-          student.rollNumber,
-
-        admissionNumber:
-          student.admissionNumber,
-
-        parentName:
-          student.parentName,
-
-        mobile:
-          student.mobile,
-
-        address:
-          student.address,
-
-      });
-
-
-      setShowForm(
-        true
-      );
-
-
-      window.scrollTo({
-        top: 0,
-        behavior: "smooth",
-      });
-
-    };
-
-
-  /* =========================================================
-     DELETE
-  ========================================================= */
+  /* =======================================================
+     DELETE STUDENT
+  ======================================================= */
 
   const handleDelete =
     async (
       student: Student
     ) => {
 
+      if (
+        !session ||
+        session.role !==
+          "principal" ||
+        !session.schoolId
+      ) {
+
+        return;
+
+      }
+
+
       /*
-        Important UI authorization check
+        Principal must not delete
+        another school's record.
       */
 
       if (
-        !session ||
-        session.role !== "principal" ||
-        String(session.schoolId) !==
-          String(student.schoolId)
+        String(
+          student.schoolId
+        ) !==
+        String(
+          session.schoolId
+        )
       ) {
 
+        setMessageType(
+          "error"
+        );
+
         setMessage(
-          "You are not authorized to delete this student."
+          "You cannot delete another school's student."
         );
 
         return;
+
       }
 
 
       const confirmed =
         window.confirm(
-          `${student.name} cha record delete karaycha aahe ka?`
+
+          `Delete student?\n\nName: ${student.name}\nClass: ${student.className}\n\nThis action cannot be undone.`
+
         );
 
 
@@ -705,32 +1118,51 @@ export default function Students() {
       try {
 
         await deleteDoc(
+
           doc(
             db,
             "students",
             student.id
           )
+
         );
 
+
+        setStudents(
+          (previous) =>
+
+            previous.filter(
+              (item) =>
+                item.id !==
+                student.id
+            )
+        );
+
+
+        setMessageType(
+          "success"
+        );
 
         setMessage(
-          "Student deleted successfully."
+          `${student.name} ka student record delete ho gaya.`
         );
-
-
-        await loadStudents();
 
       }
 
       catch (error) {
 
         console.error(
-          "Delete error:",
+          "Student delete error:",
           error
         );
 
+
+        setMessageType(
+          "error"
+        );
+
         setMessage(
-          "Student delete nahi ho saka."
+          "Student record delete nahi ho saka."
         );
 
       }
@@ -738,43 +1170,24 @@ export default function Students() {
     };
 
 
-  /* =========================================================
-     CANCEL FORM
-  ========================================================= */
-
-  const cancelForm = () => {
-
-    setForm(
-      emptyForm
-    );
-
-    setEditingId(
-      null
-    );
-
-    setShowForm(
-      false
-    );
-
-  };
-
-
-  /* =========================================================
-     SEARCH
-  ========================================================= */
+  /* =======================================================
+     SEARCH FILTER
+  ======================================================= */
 
   const filteredStudents =
     useMemo(
       () => {
 
-        const searchValue =
+        const value =
           search
             .trim()
             .toLowerCase();
 
 
-        if (!searchValue) {
+        if (!value) {
+
           return students;
+
         }
 
 
@@ -785,27 +1198,27 @@ export default function Students() {
 
               student.name
                 .toLowerCase()
-                .includes(
-                  searchValue
-                ) ||
+                .includes(value) ||
 
               student.className
                 .toLowerCase()
-                .includes(
-                  searchValue
-                ) ||
+                .includes(value) ||
 
               student.rollNumber
                 .toLowerCase()
-                .includes(
-                  searchValue
-                ) ||
+                .includes(value) ||
 
               student.admissionNumber
                 .toLowerCase()
-                .includes(
-                  searchValue
-                )
+                .includes(value) ||
+
+              student.parentName
+                .toLowerCase()
+                .includes(value) ||
+
+              student.mobile
+                .toLowerCase()
+                .includes(value)
 
             );
 
@@ -820,31 +1233,83 @@ export default function Students() {
     );
 
 
-  /* =========================================================
+  /* =======================================================
+     SUMMARY
+  ======================================================= */
+
+  const totalStudents =
+    students.length;
+
+
+  const totalBoys =
+    students.filter(
+      (student) => {
+
+        const gender =
+          student.gender
+            .trim()
+            .toLowerCase();
+
+        return (
+          gender === "male" ||
+          gender === "boy" ||
+          gender === "boys"
+        );
+
+      }
+    ).length;
+
+
+  const totalGirls =
+    students.filter(
+      (student) => {
+
+        const gender =
+          student.gender
+            .trim()
+            .toLowerCase();
+
+        return (
+          gender === "female" ||
+          gender === "girl" ||
+          gender === "girls"
+        );
+
+      }
+    ).length;
+
+
+  /* =======================================================
      SECURITY
-  ========================================================= */
+  ======================================================= */
 
   if (
     !session ||
-    session.role !== "principal" ||
+    session.role !==
+      "principal" ||
     !session.schoolId
   ) {
+
     return null;
+
   }
 
 
-  /* =========================================================
+  /* =======================================================
      UI
-  ========================================================= */
+  ======================================================= */
 
   return (
 
     <div className="private-students-page">
 
 
-      {/* HEADER */}
+      {/* ===================================================
+          HEADER
+      =================================================== */}
 
       <header className="private-students-header">
+
 
         <div>
 
@@ -853,7 +1318,9 @@ export default function Students() {
             className="private-back-button"
           >
 
-            <ArrowLeft size={17} />
+            <ArrowLeft
+              size={17}
+            />
 
             Dashboard
 
@@ -861,135 +1328,187 @@ export default function Students() {
 
 
           <span>
-            PRIVATE SCHOOL DATA
+            PRINCIPAL PANEL
           </span>
 
 
           <h1>
-            Student Management
+            Student Records
           </h1>
 
 
           <p>
-            {session.schoolName}
+
+            {session.schoolName ||
+              "Assigned School"}
+
           </p>
 
 
-          <small>
-            UDISE:{" "}
-            {session.udise || "-"}
-          </small>
+          {session.udise && (
+
+            <small>
+              UDISE:{" "}
+              {session.udise}
+            </small>
+
+          )}
 
         </div>
+
 
 
         <button
           type="button"
           className="private-add-button"
-          onClick={() => {
-
-            setForm(
-              emptyForm
-            );
-
-            setEditingId(
-              null
-            );
-
-            setShowForm(
-              true
-            );
-
-          }}
+          onClick={
+            openAddStudent
+          }
         >
 
-          <Plus size={18} />
+          <Plus
+            size={18}
+          />
 
           Add Student
 
         </button>
 
+
       </header>
 
 
 
+      {/* ===================================================
+          CONTENT
+      =================================================== */}
+
       <main className="private-students-content">
 
 
-        {/* SUMMARY */}
+        {/* =================================================
+            SUMMARY
+        ================================================= */}
 
         <section className="private-student-summary">
 
-          <div>
 
-            <Users size={24} />
+          <article>
+
+            <div>
+
+              <Users
+                size={22}
+              />
+
+            </div>
 
             <span>
               Total Students
             </span>
 
             <strong>
-              {students.length}
+              {totalStudents}
             </strong>
 
-          </div>
+          </article>
 
 
-          <div>
 
-            <UserRound size={24} />
+          <article>
+
+            <div>
+
+              <UserRound
+                size={22}
+              />
+
+            </div>
 
             <span>
               Boys
             </span>
 
             <strong>
-
-              {
-                students.filter(
-                  (student) =>
-                    student.gender ===
-                    "Male"
-                ).length
-              }
-
+              {totalBoys}
             </strong>
 
-          </div>
+          </article>
 
 
-          <div>
 
-            <UserRound size={24} />
+          <article>
+
+            <div>
+
+              <UserRound
+                size={22}
+              />
+
+            </div>
 
             <span>
               Girls
             </span>
 
             <strong>
+              {totalGirls}
+            </strong>
 
-              {
-                students.filter(
-                  (student) =>
-                    student.gender ===
-                    "Female"
-                ).length
-              }
+          </article>
+
+
+
+          <article>
+
+            <div>
+
+              <GraduationCap
+                size={22}
+              />
+
+            </div>
+
+            <span>
+              School
+            </span>
+
+            <strong
+              style={{
+                fontSize: "14px",
+              }}
+            >
+
+              {session.schoolId}
 
             </strong>
 
-          </div>
+          </article>
+
 
         </section>
 
 
 
-        {/* MESSAGE */}
+        {/* =================================================
+            MESSAGE
+        ================================================= */}
 
         {message && (
 
-          <div className="private-message">
+          <div
+            className={
+              messageType ===
+              "success"
+
+                ? "private-message success"
+
+                : "private-message error"
+            }
+          >
+
             {message}
+
           </div>
 
         )}
@@ -997,12 +1516,13 @@ export default function Students() {
 
 
         {/* =================================================
-            FORM
+            ADD / EDIT FORM
         ================================================= */}
 
         {showForm && (
 
           <section className="private-student-form-card">
+
 
             <div className="private-form-heading">
 
@@ -1026,85 +1546,94 @@ export default function Students() {
               <button
                 type="button"
                 onClick={
-                  cancelForm
+                  resetForm
                 }
+                title="Close"
               >
 
-                <X size={20} />
+                <X
+                  size={20}
+                />
 
               </button>
 
             </div>
 
 
+
             <form
+              className="private-student-form"
               onSubmit={
                 handleSubmit
               }
-              className="private-student-form"
             >
 
 
-              {/* NAME */}
+              {/* STUDENT NAME */}
 
-              <label>
+              <div className="private-full-field">
 
-                <span>
-                  Student Name *
-                </span>
+                <label>
+                  Student Full Name *
+                </label>
 
                 <input
                   type="text"
+                  placeholder="Enter student full name"
                   value={
                     form.name
                   }
-                  onChange={(e) =>
-                    handleInput(
+                  onChange={(event) =>
+                    handleChange(
                       "name",
-                      e.target.value
+                      event.target.value
                     )
                   }
-                  placeholder="Full student name"
                   required
                 />
 
-              </label>
+              </div>
 
 
 
               {/* DOB */}
 
-              <label>
+              <div>
 
-                <span>
+                <label>
                   Date of Birth *
-                </span>
+                </label>
 
                 <input
                   type="date"
                   value={
                     form.dob
                   }
-                  onChange={(e) =>
-                    handleInput(
+                  max={
+                    new Date()
+                      .toISOString()
+                      .split("T")[0]
+                  }
+                  onChange={(event) =>
+                    handleChange(
                       "dob",
-                      e.target.value
+                      event.target.value
                     )
                   }
                   required
                 />
 
-              </label>
+              </div>
 
 
 
               {/* AGE */}
 
-              <label>
+              <div>
 
-                <span>
+                <label>
                   Age
-                </span>
+                </label>
 
                 <input
                   type="text"
@@ -1119,26 +1648,26 @@ export default function Students() {
                   disabled
                 />
 
-              </label>
+              </div>
 
 
 
               {/* GENDER */}
 
-              <label>
+              <div>
 
-                <span>
+                <label>
                   Gender *
-                </span>
+                </label>
 
                 <select
                   value={
                     form.gender
                   }
-                  onChange={(e) =>
-                    handleInput(
+                  onChange={(event) =>
+                    handleChange(
                       "gender",
-                      e.target.value
+                      event.target.value
                     )
                   }
                   required
@@ -1162,26 +1691,26 @@ export default function Students() {
 
                 </select>
 
-              </label>
+              </div>
 
 
 
               {/* CLASS */}
 
-              <label>
+              <div>
 
-                <span>
+                <label>
                   Class *
-                </span>
+                </label>
 
                 <select
                   value={
                     form.className
                   }
-                  onChange={(e) =>
-                    handleInput(
+                  onChange={(event) =>
+                    handleChange(
                       "className",
-                      e.target.value
+                      event.target.value
                     )
                   }
                   required
@@ -1191,28 +1720,21 @@ export default function Students() {
                     Select Class
                   </option>
 
-                  {Array.from(
-                    {
-                      length: 12,
-                    },
-                    (_, index) =>
-                      index + 1
-                  ).map(
-                    (classNumber) => (
+
+                  {classOptions.map(
+                    (className) => (
 
                       <option
                         key={
-                          classNumber
+                          className
                         }
                         value={
-                          String(
-                            classNumber
-                          )
+                          className
                         }
                       >
 
                         Class{" "}
-                        {classNumber}
+                        {className}
 
                       </option>
 
@@ -1221,106 +1743,107 @@ export default function Students() {
 
                 </select>
 
-              </label>
+              </div>
 
 
 
-              {/* ROLL NUMBER */}
+              {/* ROLL */}
 
-              <label>
+              <div>
 
-                <span>
+                <label>
                   Roll Number
-                </span>
+                </label>
 
                 <input
                   type="text"
+                  placeholder="Example: 12"
                   value={
                     form.rollNumber
                   }
-                  onChange={(e) =>
-                    handleInput(
+                  onChange={(event) =>
+                    handleChange(
                       "rollNumber",
-                      e.target.value
+                      event.target.value
                     )
                   }
-                  placeholder="Example: 12"
                 />
 
-              </label>
+              </div>
 
 
 
-              {/* ADMISSION NUMBER */}
+              {/* ADMISSION */}
 
-              <label>
+              <div>
 
-                <span>
+                <label>
                   Admission Number
-                </span>
+                </label>
 
                 <input
                   type="text"
+                  placeholder="Admission number"
                   value={
                     form.admissionNumber
                   }
-                  onChange={(e) =>
-                    handleInput(
+                  onChange={(event) =>
+                    handleChange(
                       "admissionNumber",
-                      e.target.value
+                      event.target.value
                     )
                   }
-                  placeholder="Example: ADM001"
                 />
 
-              </label>
+              </div>
 
 
 
               {/* PARENT */}
 
-              <label>
+              <div>
 
-                <span>
+                <label>
                   Parent / Guardian Name
-                </span>
+                </label>
 
                 <input
                   type="text"
+                  placeholder="Parent or guardian name"
                   value={
                     form.parentName
                   }
-                  onChange={(e) =>
-                    handleInput(
+                  onChange={(event) =>
+                    handleChange(
                       "parentName",
-                      e.target.value
+                      event.target.value
                     )
                   }
-                  placeholder="Parent name"
                 />
 
-              </label>
+              </div>
 
 
 
               {/* MOBILE */}
 
-              <label>
+              <div>
 
-                <span>
-                  Parent Mobile
-                </span>
+                <label>
+                  Parent Mobile Number
+                </label>
 
                 <input
                   type="tel"
                   maxLength={10}
+                  placeholder="10 digit mobile number"
                   value={
                     form.mobile
                   }
-                  onChange={(e) =>
-                    handleInput(
-                      "mobile",
-                      e.target.value
+                  onChange={(event) => {
+
+                    const value =
+                      event.target.value
                         .replace(
                           /\D/g,
                           ""
@@ -1328,57 +1851,71 @@ export default function Students() {
                         .slice(
                           0,
                           10
-                        )
-                    )
-                  }
-                  placeholder="10 digit mobile"
+                        );
+
+
+                    handleChange(
+                      "mobile",
+                      value
+                    );
+
+                  }}
                 />
 
-              </label>
+              </div>
 
 
 
               {/* ADDRESS */}
 
-              <label className="private-full-field">
+              <div className="private-full-field">
 
-                <span>
+                <label>
                   Address
-                </span>
+                </label>
 
                 <textarea
                   rows={3}
+                  placeholder="Student address"
                   value={
                     form.address
                   }
-                  onChange={(e) =>
-                    handleInput(
+                  onChange={(event) =>
+                    handleChange(
                       "address",
-                      e.target.value
+                      event.target.value
                     )
                   }
-                  placeholder="Student address"
                 />
 
-              </label>
+              </div>
 
 
 
-              {/* BUTTONS */}
+              {/* ACTIONS */}
 
               <div className="private-form-actions">
+
 
                 <button
                   type="button"
                   className="private-cancel-button"
                   onClick={
-                    cancelForm
+                    resetForm
+                  }
+                  disabled={
+                    saving
                   }
                 >
+
+                  <X
+                    size={16}
+                  />
 
                   Cancel
 
                 </button>
+
 
 
                 <button
@@ -1389,19 +1926,29 @@ export default function Students() {
                   }
                 >
 
-                  <Save size={17} />
+                  <Save
+                    size={16}
+                  />
+
 
                   {saving
+
                     ? "Saving..."
+
                     : editingId
+
                     ? "Update Student"
+
                     : "Save Student"}
 
                 </button>
 
+
               </div>
 
+
             </form>
+
 
           </section>
 
@@ -1415,81 +1962,143 @@ export default function Students() {
 
         <section className="private-student-toolbar">
 
+
           <div className="private-search">
 
-            <Search size={18} />
+            <Search
+              size={18}
+            />
 
             <input
               type="search"
-              placeholder="Search name, class, roll number or admission number..."
+              placeholder="Search by name, class, roll no., admission no., parent or mobile..."
               value={
                 search
               }
-              onChange={(e) =>
+              onChange={(event) =>
                 setSearch(
-                  e.target.value
+                  event.target.value
                 )
               }
             />
 
           </div>
 
+
+
+          <button
+            type="button"
+            onClick={
+              loadStudents
+            }
+            disabled={
+              loading
+            }
+          >
+
+            <RefreshCw
+              size={17}
+            />
+
+            Refresh
+
+          </button>
+
+
         </section>
 
 
 
         {/* =================================================
-            STUDENT TABLE
+            TABLE
         ================================================= */}
 
         <section className="private-student-table-card">
+
 
           <div className="private-table-title">
 
             <div>
 
               <span>
-                STUDENT RECORDS
+                PRIVATE SCHOOL DATA
               </span>
 
               <h2>
-                {session.schoolName}
+                Student List
               </h2>
 
             </div>
 
 
             <strong>
+
               {
                 filteredStudents.length
               }{" "}
-              Students
+
+              Records
+
             </strong>
 
           </div>
 
 
+
           {loading ? (
 
             <div className="private-empty">
-              Loading student records...
+
+              <RefreshCw
+                size={35}
+              />
+
+              <h3>
+                Loading Students...
+              </h3>
+
             </div>
 
-          ) : filteredStudents.length === 0 ? (
+          ) : filteredStudents.length ===
+            0 ? (
 
             <div className="private-empty">
 
-              <Users size={40} />
+              <GraduationCap
+                size={45}
+              />
 
               <h3>
-                No Student Records
+                No Student Found
               </h3>
 
               <p>
-                Is school ke liye abhi
-                student information add
-                nahi ki gayi hai.
+
+                {search
+                  ? "Search ke according koi student nahi mila."
+                  : "Abhi is school me individual student records add nahi kiye gaye hain."}
+
               </p>
+
+
+              {!search && (
+
+                <button
+                  type="button"
+                  onClick={
+                    openAddStudent
+                  }
+                >
+
+                  <Plus
+                    size={16}
+                  />
+
+                  Add First Student
+
+                </button>
+
+              )}
 
             </div>
 
@@ -1502,6 +2111,10 @@ export default function Students() {
                 <thead>
 
                   <tr>
+
+                    <th>
+                      #
+                    </th>
 
                     <th>
                       Student
@@ -1528,11 +2141,19 @@ export default function Students() {
                     </th>
 
                     <th>
+                      Admission No.
+                    </th>
+
+                    <th>
                       Parent
                     </th>
 
                     <th>
                       Mobile
+                    </th>
+
+                    <th>
+                      Address
                     </th>
 
                     <th>
@@ -1547,7 +2168,10 @@ export default function Students() {
                 <tbody>
 
                   {filteredStudents.map(
-                    (student) => (
+                    (
+                      student,
+                      index
+                    ) => (
 
                       <tr
                         key={
@@ -1555,118 +2179,231 @@ export default function Students() {
                         }
                       >
 
+
+                        {/* SERIAL */}
+
+                        <td>
+                          {index + 1}
+                        </td>
+
+
+
+                        {/* NAME */}
+
+                        <td>
+
+                          <div className="principal-person">
+
+                            <div className="principal-avatar">
+
+                              {student.name
+                                .charAt(0)
+                                .toUpperCase() ||
+                                "S"}
+
+                            </div>
+
+
+                            <div>
+
+                              <strong>
+
+                                {
+                                  student.name
+                                }
+
+                              </strong>
+
+                              <small>
+                                Student
+                              </small>
+
+                            </div>
+
+                          </div>
+
+                        </td>
+
+
+
+                        {/* CLASS */}
+
                         <td>
 
                           <strong>
+
+                            Class{" "}
                             {
-                              student.name
+                              student.className
                             }
+
                           </strong>
 
-                          <small>
-                            {
-                              student.admissionNumber ||
-                              "No Admission No."
-                            }
-                          </small>
+                        </td>
+
+
+
+                        {/* ROLL */}
+
+                        <td>
+
+                          {student.rollNumber ||
+                            "-"}
 
                         </td>
 
 
-                        <td>
-                          Class{" "}
-                          {
-                            student.className
-                          }
-                        </td>
 
+                        {/* GENDER */}
 
                         <td>
+
                           {
-                            student.rollNumber ||
+                            student.gender ||
                             "-"
                           }
+
                         </td>
 
 
+
+                        {/* DOB */}
+
                         <td>
-                          {
-                            student.gender
-                          }
+
+                          <span
+                            style={{
+                              display:
+                                "inline-flex",
+                              alignItems:
+                                "center",
+                              gap: "5px",
+                            }}
+                          >
+
+                            <CalendarDays
+                              size={13}
+                            />
+
+                            {student.dob ||
+                              "-"}
+
+                          </span>
+
                         </td>
 
 
-                        <td>
-                          {
-                            student.dob
-                          }
-                        </td>
 
+                        {/* AGE */}
 
                         <td>
+
                           {
                             student.age
-                          }
+                          }{" "}
+
+                          Years
+
                         </td>
 
+
+
+                        {/* ADMISSION */}
 
                         <td>
-                          {
-                            student.parentName ||
-                            "-"
-                          }
+
+                          {student.admissionNumber ||
+                            "-"}
+
                         </td>
 
+
+
+                        {/* PARENT */}
 
                         <td>
-                          {
-                            student.mobile ||
-                            "-"
-                          }
+
+                          {student.parentName ||
+                            "-"}
+
                         </td>
 
+
+
+                        {/* MOBILE */}
+
+                        <td>
+
+                          {student.mobile ||
+                            "-"}
+
+                        </td>
+
+
+
+                        {/* ADDRESS */}
+
+                        <td>
+
+                          {student.address ||
+                            "-"}
+
+                        </td>
+
+
+
+                        {/* ACTIONS */}
 
                         <td>
 
                           <div className="private-table-actions">
 
+
                             <button
                               type="button"
+                              className="edit"
+                              title="Edit Student"
                               onClick={() =>
                                 handleEdit(
                                   student
                                 )
                               }
-                              title="Edit"
                             >
 
                               <Edit3
-                                size={16}
+                                size={15}
                               />
 
+                              Edit
+
                             </button>
+
 
 
                             <button
                               type="button"
                               className="delete"
+                              title="Delete Student"
                               onClick={() =>
                                 handleDelete(
                                   student
                                 )
                               }
-                              title="Delete"
                             >
 
                               <Trash2
-                                size={16}
+                                size={15}
                               />
 
+                              Delete
+
                             </button>
+
 
                           </div>
 
                         </td>
+
 
                       </tr>
 
@@ -1681,12 +2418,14 @@ export default function Students() {
 
           )}
 
+
         </section>
 
+
       </main>
+
 
     </div>
 
   );
-
 }

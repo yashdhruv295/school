@@ -1,11 +1,8 @@
-import type { ReactNode } from "react";
-
 import {
-  BrowserRouter,
-  Route,
+  HashRouter,
   Routes,
+  Route,
 } from "react-router-dom";
-
 
 /* =========================================================
    PUBLIC COMPONENTS
@@ -36,6 +33,20 @@ import SetupDirector from "./pages/SetupDirector";
 
 
 /* =========================================================
+   PRINCIPAL PAGES
+========================================================= */
+
+import PrincipalDashboard from "./principal/PrincipalDashboard";
+import SchoolProfile from "./principal/SchoolProfile";
+import StudentData from "./principal/StudentData";
+import Students from "./principal/Students";
+import TeacherData from "./principal/TeacherData";
+import Infrastructure from "./principal/Infrastructure";
+import MonthlyReport from "./principal/MonthlyReport";
+import PrincipalSettings from "./principal/PrincipalSettings";
+
+
+/* =========================================================
    DIRECTOR PAGES
 ========================================================= */
 
@@ -46,25 +57,7 @@ import CreatePrincipal from "./director/CreatePrincipal";
 import AllSchoolData from "./director/AllSchoolData";
 import Reports from "./director/Reports";
 import DirectorSettings from "./director/DirectorSettings";
-
-/* NEW */
 import DirectorSchoolStudents from "./director/DirectorSchoolStudents";
-
-
-/* =========================================================
-   PRINCIPAL PAGES
-========================================================= */
-
-import PrincipalDashboard from "./principal/PrincipalDashboard";
-import SchoolProfile from "./principal/SchoolProfile";
-import StudentData from "./principal/StudentData";
-import TeacherData from "./principal/TeacherData";
-import Infrastructure from "./principal/Infrastructure";
-import MonthlyReport from "./principal/MonthlyReport";
-import PrincipalSettings from "./principal/PrincipalSettings";
-
-/* NEW */
-import Students from "./principal/Students";
 
 
 /* =========================================================
@@ -72,9 +65,8 @@ import Students from "./principal/Students";
 ========================================================= */
 
 interface PublicLayoutProps {
-  children: ReactNode;
+  children: React.ReactNode;
 }
-
 
 function PublicLayout({
   children,
@@ -103,26 +95,71 @@ function PublicLayout({
 
 function NotFoundPage() {
   return (
-    <div className="temporary-page">
+    <PublicLayout>
 
-      <div className="temporary-page-card">
+      <section
+        style={{
+          minHeight: "60vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          textAlign: "center",
+          padding: "50px 20px",
+          background: "#f5f9fc",
+        }}
+      >
 
-        <span>
-          SCHOOL MANAGEMENT PORTAL
-        </span>
+        <div>
 
-        <h1>
-          404 - Page Not Found
-        </h1>
+          <p
+            style={{
+              color: "#174f72",
+              fontSize: "15px",
+              marginBottom: "8px",
+            }}
+          >
+            SCHOOL MANAGEMENT PORTAL
+          </p>
 
-        <p>
-          The page you are looking for
-          does not exist.
-        </p>
+          <h1
+            style={{
+              margin: "0 0 15px",
+              color: "#07558c",
+              fontSize: "42px",
+            }}
+          >
+            404 - Page Not Found
+          </h1>
 
-      </div>
+          <p
+            style={{
+              color: "#708090",
+              marginBottom: "25px",
+            }}
+          >
+            The page you are looking for does not exist.
+          </p>
 
-    </div>
+          <a
+            href="#/"
+            style={{
+              display: "inline-block",
+              padding: "11px 22px",
+              borderRadius: "7px",
+              background: "#075c91",
+              color: "#ffffff",
+              textDecoration: "none",
+              fontWeight: 700,
+            }}
+          >
+            Go to Home
+          </a>
+
+        </div>
+
+      </section>
+
+    </PublicLayout>
   );
 }
 
@@ -132,18 +169,15 @@ function NotFoundPage() {
 ========================================================= */
 
 export default function App() {
-
   return (
 
-    <BrowserRouter>
+    <HashRouter>
 
       <Routes>
-
 
         {/* =================================================
             PUBLIC ROUTES
         ================================================= */}
-
 
         <Route
           path="/"
@@ -259,11 +293,12 @@ export default function App() {
             DIRECTOR INITIAL SETUP
         ================================================= */}
 
-
         <Route
           path="/setup-director"
           element={
-            <SetupDirector />
+            <PublicLayout>
+              <SetupDirector />
+            </PublicLayout>
           }
         />
 
@@ -271,7 +306,6 @@ export default function App() {
         {/* =================================================
             DIRECTOR ROUTES
         ================================================= */}
-
 
         <Route
           path="/director"
@@ -287,12 +321,6 @@ export default function App() {
             <ManageSchools />
           }
         />
-
-
-        {/* =================================================
-            IMPORTANT
-            Director selected school private data
-        ================================================= */}
 
 
         <Route
@@ -347,7 +375,6 @@ export default function App() {
             PRINCIPAL ROUTES
         ================================================= */}
 
-
         <Route
           path="/principal"
           element={
@@ -356,22 +383,12 @@ export default function App() {
         />
 
 
-        {/* SCHOOL PROFILE */}
-
         <Route
           path="/principal/profile"
           element={
             <SchoolProfile />
           }
         />
-
-
-        {/* =================================================
-            STUDENT SUMMARY
-
-            Existing class-wise boys/girls
-            summary page
-        ================================================= */}
 
 
         <Route
@@ -382,21 +399,6 @@ export default function App() {
         />
 
 
-        {/* =================================================
-            INDIVIDUAL PRIVATE STUDENT RECORDS
-
-            Name
-            DOB
-            Age
-            Gender
-            Class
-            Roll Number
-            Parent
-            Mobile
-            Address
-        ================================================= */}
-
-
         <Route
           path="/principal/students-list"
           element={
@@ -404,8 +406,6 @@ export default function App() {
           }
         />
 
-
-        {/* TEACHERS */}
 
         <Route
           path="/principal/teachers"
@@ -415,8 +415,6 @@ export default function App() {
         />
 
 
-        {/* INFRASTRUCTURE */}
-
         <Route
           path="/principal/infrastructure"
           element={
@@ -425,8 +423,6 @@ export default function App() {
         />
 
 
-        {/* REPORT */}
-
         <Route
           path="/principal/report"
           element={
@@ -434,8 +430,6 @@ export default function App() {
           }
         />
 
-
-        {/* SETTINGS */}
 
         <Route
           path="/principal/settings"
@@ -449,21 +443,16 @@ export default function App() {
             404
         ================================================= */}
 
-
         <Route
           path="*"
           element={
-            <PublicLayout>
-              <NotFoundPage />
-            </PublicLayout>
+            <NotFoundPage />
           }
         />
 
-
       </Routes>
 
-    </BrowserRouter>
+    </HashRouter>
 
   );
-
 }
