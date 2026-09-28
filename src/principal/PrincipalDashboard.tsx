@@ -5,15 +5,21 @@ import {
   GraduationCap,
   LayoutDashboard,
   LogOut,
+  Menu,
   School,
   Settings,
   UserRound,
   Users,
+  X,
 } from "lucide-react";
 
 import {
   useEffect,
   useState,
+} from "react";
+
+import type {
+  ReactNode,
 } from "react";
 
 import {
@@ -40,32 +46,31 @@ import {
 ========================================================= */
 
 interface PrincipalStats {
-
   students: number;
-
   boys: number;
-
   girls: number;
-
   teachers: number;
-
   classrooms: number;
+}
 
+interface DashboardStatProps {
+  icon: ReactNode;
+  label: string;
+  value: string | number;
+  note: string;
 }
 
 
+/* =========================================================
+   INITIAL STATS
+========================================================= */
+
 const initialStats: PrincipalStats = {
-
   students: 0,
-
   boys: 0,
-
   girls: 0,
-
   teachers: 0,
-
   classrooms: 0,
-
 };
 
 
@@ -73,34 +78,26 @@ const initialStats: PrincipalStats = {
    NUMBER HELPER
 ========================================================= */
 
-function numberValue(
-  value: unknown
-): number {
-
-  const number =
-    Number(value);
+function numberValue(value: unknown): number {
+  const number = Number(value);
 
   return Number.isFinite(number)
     ? number
     : 0;
-
 }
 
 
 /* =========================================================
-   COMPONENT
+   PRINCIPAL DASHBOARD
 ========================================================= */
 
 export default function PrincipalDashboard() {
 
-  const navigate =
-    useNavigate();
+  const navigate = useNavigate();
 
-  const location =
-    useLocation();
+  const location = useLocation();
 
-  const session =
-    getSession();
+  const session = getSession();
 
 
   const [loading, setLoading] =
@@ -113,9 +110,29 @@ export default function PrincipalDashboard() {
     );
 
 
-  /* =========================================================
+  /* =======================================================
+     MOBILE SIDEBAR
+  ======================================================= */
+
+  const [
+    sidebarOpen,
+    setSidebarOpen,
+  ] = useState(false);
+
+
+  /* =======================================================
+     LOGOUT MODAL
+  ======================================================= */
+
+  const [
+    logoutModal,
+    setLogoutModal,
+  ] = useState(false);
+
+
+  /* =======================================================
      AUTH CHECK
-  ========================================================= */
+  ======================================================= */
 
   useEffect(() => {
 
@@ -142,9 +159,53 @@ export default function PrincipalDashboard() {
   ]);
 
 
-  /* =========================================================
+  /* =======================================================
+     CLOSE SIDEBAR AFTER ROUTE CHANGE
+  ======================================================= */
+
+  useEffect(() => {
+
+    setSidebarOpen(false);
+
+  }, [
+    location.pathname,
+  ]);
+
+
+  /* =======================================================
+     PREVENT BODY SCROLL WHEN MENU OPEN
+  ======================================================= */
+
+  useEffect(() => {
+
+    if (sidebarOpen) {
+
+      document.body.style.overflow =
+        "hidden";
+
+    } else {
+
+      document.body.style.overflow =
+        "";
+
+    }
+
+
+    return () => {
+
+      document.body.style.overflow =
+        "";
+
+    };
+
+  }, [
+    sidebarOpen,
+  ]);
+
+
+  /* =======================================================
      LOAD SCHOOL SUMMARY
-  ========================================================= */
+  ======================================================= */
 
   useEffect(() => {
 
@@ -167,7 +228,9 @@ export default function PrincipalDashboard() {
 
 
         let students = 0;
+
         let boys = 0;
+
         let girls = 0;
 
         let teachers = 0;
@@ -175,9 +238,9 @@ export default function PrincipalDashboard() {
         let classrooms = 0;
 
 
-        /* =====================================================
+        /* =================================================
            STUDENT SUMMARY
-        ===================================================== */
+        ================================================= */
 
         try {
 
@@ -223,10 +286,7 @@ export default function PrincipalDashboard() {
               );
 
 
-            /*
-              Fallback:
-              If totalStudents not saved
-            */
+            /* FALLBACK */
 
             if (
               students === 0 &&
@@ -242,10 +302,7 @@ export default function PrincipalDashboard() {
             }
 
 
-            /*
-              Fallback:
-              Calculate from classes
-            */
+            /* FALLBACK FROM CLASSES */
 
             if (
               students === 0 &&
@@ -262,7 +319,10 @@ export default function PrincipalDashboard() {
               data.classes.forEach(
                 (
                   classData:
-                    Record<string, unknown>
+                    Record<
+                      string,
+                      unknown
+                    >
                 ) => {
 
                   calculatedBoys +=
@@ -283,8 +343,10 @@ export default function PrincipalDashboard() {
               boys =
                 calculatedBoys;
 
+
               girls =
                 calculatedGirls;
+
 
               students =
                 calculatedBoys +
@@ -306,9 +368,9 @@ export default function PrincipalDashboard() {
         }
 
 
-        /* =====================================================
+        /* =================================================
            TEACHER SUMMARY
-        ===================================================== */
+        ================================================= */
 
         try {
 
@@ -377,9 +439,9 @@ export default function PrincipalDashboard() {
         }
 
 
-        /* =====================================================
+        /* =================================================
            INFRASTRUCTURE
-        ===================================================== */
+        ================================================= */
 
         try {
 
@@ -429,24 +491,18 @@ export default function PrincipalDashboard() {
         }
 
 
-        /* =====================================================
+        /* =================================================
            UPDATE UI
-        ===================================================== */
+        ================================================= */
 
         if (!cancelled) {
 
           setStats({
-
             students,
-
             boys,
-
             girls,
-
             teachers,
-
             classrooms,
-
           });
 
 
@@ -473,13 +529,17 @@ export default function PrincipalDashboard() {
   ]);
 
 
-  /* =========================================================
+  /* =======================================================
      LOGOUT
-  ========================================================= */
+  ======================================================= */
 
   const handleLogout = () => {
 
     clearSession();
+
+    setSidebarOpen(false);
+
+    setLogoutModal(false);
 
 
     navigate(
@@ -492,25 +552,24 @@ export default function PrincipalDashboard() {
   };
 
 
-  /* =========================================================
+  /* =======================================================
      ACTIVE LINK
-  ========================================================= */
+  ======================================================= */
 
-  const isActive =
-    (
-      path: string
-    ) => {
+  const isActive = (
+    path: string
+  ) => {
 
-      return (
-        location.pathname === path
-      );
+    return (
+      location.pathname === path
+    );
 
-    };
+  };
 
 
-  /* =========================================================
+  /* =======================================================
      SECURITY
-  ========================================================= */
+  ======================================================= */
 
   if (
     !session ||
@@ -523,30 +582,49 @@ export default function PrincipalDashboard() {
   }
 
 
-  /* =========================================================
+  /* =======================================================
      UI
-  ========================================================= */
+  ======================================================= */
 
   return (
 
-    <div className="director-dashboard">
+    <div className="director-dashboard principal-dashboard">
 
 
-      {/* =====================================================
+      {/* ===================================================
+          MOBILE BACKDROP
+      =================================================== */}
+
+      <div
+        className={
+          sidebarOpen
+            ? "principal-sidebar-overlay active"
+            : "principal-sidebar-overlay"
+        }
+        onClick={() =>
+          setSidebarOpen(false)
+        }
+      />
+
+
+      {/* ===================================================
           SIDEBAR
-      ===================================================== */}
+      =================================================== */}
 
-      <aside className="dashboard-sidebar">
+      <aside
+        className={
+          sidebarOpen
+            ? "dashboard-sidebar principal-sidebar mobile-open"
+            : "dashboard-sidebar principal-sidebar"
+        }
+      >
 
 
         {/* BRAND */}
 
         <div className="dashboard-brand">
 
-          <School
-            size={34}
-          />
-
+          <School size={34} />
 
           <div>
 
@@ -560,11 +638,28 @@ export default function PrincipalDashboard() {
 
           </div>
 
+
+          {/* MOBILE CLOSE */}
+
+          <button
+            type="button"
+            className="principal-sidebar-close"
+            onClick={() =>
+              setSidebarOpen(false)
+            }
+            aria-label="Close menu"
+          >
+
+            <X size={21} />
+
+          </button>
+
         </div>
 
 
-
-        {/* USER */}
+        {/* =================================================
+            USER
+        ================================================= */}
 
         <div className="dashboard-user">
 
@@ -587,7 +682,6 @@ export default function PrincipalDashboard() {
 
             </strong>
 
-
             <span>
               Principal
             </span>
@@ -597,49 +691,13 @@ export default function PrincipalDashboard() {
         </div>
 
 
+        {/* =================================================
+            SCHOOL DETAILS
+        ================================================= */}
 
-        {/* SCHOOL */}
+        <div className="principal-school-card">
 
-        <div
-          style={{
-            padding:
-              "12px 15px",
-
-            margin:
-              "0 14px 15px",
-
-            borderRadius:
-              "8px",
-
-            background:
-              "rgba(255,255,255,.07)",
-
-            color:
-              "#dcecf5",
-
-            fontSize:
-              "10px",
-
-            lineHeight:
-              "1.5",
-          }}
-        >
-
-          <strong
-            style={{
-              display:
-                "block",
-
-              color:
-                "#ffffff",
-
-              fontSize:
-                "11px",
-
-              marginBottom:
-                "3px",
-            }}
-          >
+          <strong>
 
             {session.schoolName ||
               "Assigned School"}
@@ -647,18 +705,21 @@ export default function PrincipalDashboard() {
           </strong>
 
 
-          UDISE:{" "}
+          <span>
 
-          {session.udise ||
-            "-"}
+            UDISE:{" "}
+
+            {session.udise ||
+              "-"}
+
+          </span>
 
         </div>
 
 
-
-        {/* ===================================================
+        {/* =================================================
             NAVIGATION
-        =================================================== */}
+        ================================================= */}
 
         <nav>
 
@@ -687,7 +748,6 @@ export default function PrincipalDashboard() {
           </Link>
 
 
-
           {/* SCHOOL PROFILE */}
 
           <Link
@@ -710,7 +770,6 @@ export default function PrincipalDashboard() {
             </span>
 
           </Link>
-
 
 
           {/* STUDENT SUMMARY */}
@@ -737,10 +796,7 @@ export default function PrincipalDashboard() {
           </Link>
 
 
-
-          {/* =================================================
-              NEW - INDIVIDUAL STUDENTS
-          ================================================= */}
+          {/* INDIVIDUAL STUDENTS */}
 
           <Link
             to="/principal/students-list"
@@ -762,7 +818,6 @@ export default function PrincipalDashboard() {
             </span>
 
           </Link>
-
 
 
           {/* TEACHERS */}
@@ -789,7 +844,6 @@ export default function PrincipalDashboard() {
           </Link>
 
 
-
           {/* INFRASTRUCTURE */}
 
           <Link
@@ -812,7 +866,6 @@ export default function PrincipalDashboard() {
             </span>
 
           </Link>
-
 
 
           {/* REPORT */}
@@ -839,7 +892,6 @@ export default function PrincipalDashboard() {
           </Link>
 
 
-
           {/* SETTINGS */}
 
           <Link
@@ -863,17 +915,18 @@ export default function PrincipalDashboard() {
 
           </Link>
 
-
         </nav>
 
 
-
-        {/* LOGOUT */}
+        {/* =================================================
+            LOGOUT
+        ================================================= */}
 
         <button
           type="button"
-          onClick={
-            handleLogout
+          className="principal-logout-button"
+          onClick={() =>
+            setLogoutModal(true)
           }
         >
 
@@ -891,39 +944,69 @@ export default function PrincipalDashboard() {
       </aside>
 
 
-
-      {/* =====================================================
+      {/* ===================================================
           MAIN
-      ===================================================== */}
+      =================================================== */}
 
       <div className="dashboard-main">
 
 
-        {/* TOP BAR */}
+        {/* =================================================
+            TOP BAR
+        ================================================= */}
 
         <header className="dashboard-topbar">
 
-          <div>
 
-            <h1>
-              Principal Dashboard
-            </h1>
+          <div className="principal-topbar-left">
 
-            <p>
-              {session.schoolName ||
-                "School Management"}
-            </p>
+
+            {/* MOBILE HAMBURGER */}
+
+            <button
+              type="button"
+              className="principal-mobile-menu"
+              onClick={() =>
+                setSidebarOpen(true)
+              }
+              aria-label="Open menu"
+            >
+
+              <Menu size={23} />
+
+            </button>
+
+
+            <div>
+
+              <h1>
+                Principal Dashboard
+              </h1>
+
+              <p>
+
+                {session.schoolName ||
+                  "School Management"}
+
+              </p>
+
+            </div>
 
           </div>
 
 
+          {/* USER */}
+
           <div className="topbar-user">
 
-            <div>
+
+            <div className="principal-topbar-user-info">
 
               <strong>
+
                 {session.name ||
                   "Principal"}
+
               </strong>
 
               <span>
@@ -944,18 +1027,20 @@ export default function PrincipalDashboard() {
 
           </div>
 
+
         </header>
 
 
-
-        {/* ===================================================
+        {/* =================================================
             CONTENT
-        =================================================== */}
+        ================================================= */}
 
         <main className="dashboard-content">
 
 
-          {/* WELCOME */}
+          {/* =================================================
+              WELCOME
+          ================================================= */}
 
           <section className="dashboard-welcome">
 
@@ -987,7 +1072,6 @@ export default function PrincipalDashboard() {
           </section>
 
 
-
           {/* =================================================
               STATISTICS
           ================================================= */}
@@ -998,126 +1082,97 @@ export default function PrincipalDashboard() {
             {/* STUDENTS */}
 
             <DashboardStat
-
               icon={
                 <Users
                   size={24}
                 />
               }
-
               label="Students"
-
               value={
                 loading
                   ? "..."
                   : stats.students
               }
-
-              note={`Boys ${stats.boys} • Girls ${stats.girls}`}
-
+              note={
+                `Boys ${stats.boys} • Girls ${stats.girls}`
+              }
             />
-
 
 
             {/* BOYS */}
 
             <DashboardStat
-
               icon={
                 <GraduationCap
                   size={24}
                 />
               }
-
               label="Boys"
-
               value={
                 loading
                   ? "..."
                   : stats.boys
               }
-
               note="Reported boys"
-
             />
-
 
 
             {/* GIRLS */}
 
             <DashboardStat
-
               icon={
                 <GraduationCap
                   size={24}
                 />
               }
-
               label="Girls"
-
               value={
                 loading
                   ? "..."
                   : stats.girls
               }
-
               note="Reported girls"
-
             />
-
 
 
             {/* TEACHERS */}
 
             <DashboardStat
-
               icon={
                 <UserRound
                   size={24}
                 />
               }
-
               label="Teachers"
-
               value={
                 loading
                   ? "..."
                   : stats.teachers
               }
-
-              note={`${stats.classrooms} classrooms reported`}
-
+              note={
+                `${stats.classrooms} classrooms reported`
+              }
             />
 
 
           </section>
 
 
-
           {/* =================================================
-              QUICK ACTION TITLE
+              QUICK ACTION HEADING
           ================================================= */}
 
-          <h2
-            style={{
-              marginTop:
-                "30px",
+          <div className="principal-section-heading">
 
-              marginBottom:
-                "15px",
+            <span>
+              SCHOOL MANAGEMENT
+            </span>
 
-              color:
-                "#214b65",
+            <h2>
+              Quick Actions
+            </h2>
 
-              fontSize:
-                "18px",
-            }}
-          >
-
-            Quick Actions
-
-          </h2>
-
+          </div>
 
 
           {/* =================================================
@@ -1127,7 +1182,7 @@ export default function PrincipalDashboard() {
           <section className="director-actions">
 
 
-            {/* INDIVIDUAL STUDENTS */}
+            {/* STUDENT RECORDS */}
 
             <Link
               to="/principal/students-list"
@@ -1142,13 +1197,14 @@ export default function PrincipalDashboard() {
               </strong>
 
               <span>
+
                 Add, edit, search and
                 manage individual
                 student information.
+
               </span>
 
             </Link>
-
 
 
             {/* STUDENT SUMMARY */}
@@ -1166,13 +1222,14 @@ export default function PrincipalDashboard() {
               </strong>
 
               <span>
+
                 Update class-wise boys,
                 girls and total student
                 information.
+
               </span>
 
             </Link>
-
 
 
             {/* TEACHERS */}
@@ -1190,12 +1247,13 @@ export default function PrincipalDashboard() {
               </strong>
 
               <span>
+
                 Update school teacher
                 information.
+
               </span>
 
             </Link>
-
 
 
             {/* INFRASTRUCTURE */}
@@ -1213,12 +1271,13 @@ export default function PrincipalDashboard() {
               </strong>
 
               <span>
+
                 Update classrooms and
                 school facilities.
+
               </span>
 
             </Link>
-
 
 
             {/* PROFILE */}
@@ -1236,12 +1295,13 @@ export default function PrincipalDashboard() {
               </strong>
 
               <span>
+
                 Update your school's
                 basic information.
+
               </span>
 
             </Link>
-
 
 
             {/* REPORT */}
@@ -1259,8 +1319,10 @@ export default function PrincipalDashboard() {
               </strong>
 
               <span>
+
                 View consolidated
                 school information.
+
               </span>
 
             </Link>
@@ -1275,6 +1337,91 @@ export default function PrincipalDashboard() {
       </div>
 
 
+      {/* ===================================================
+          LOGOUT CONFIRMATION
+      =================================================== */}
+
+      {logoutModal && (
+
+        <div
+          className="principal-logout-modal-overlay"
+          onClick={() =>
+            setLogoutModal(false)
+          }
+        >
+
+          <div
+            className="principal-logout-modal"
+            onClick={(event) =>
+              event.stopPropagation()
+            }
+          >
+
+            <div className="principal-logout-modal-icon">
+
+              <LogOut
+                size={28}
+              />
+
+            </div>
+
+
+            <h2>
+              Logout
+            </h2>
+
+
+            <p>
+
+              Are you sure you want
+              to logout from the
+              Principal Panel?
+
+            </p>
+
+
+            <div className="principal-logout-modal-actions">
+
+
+              <button
+                type="button"
+                className="principal-logout-cancel"
+                onClick={() =>
+                  setLogoutModal(false)
+                }
+              >
+
+                Cancel
+
+              </button>
+
+
+              <button
+                type="button"
+                className="principal-logout-confirm"
+                onClick={
+                  handleLogout
+                }
+              >
+
+                <LogOut
+                  size={16}
+                />
+
+                Logout
+
+              </button>
+
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
+
+
     </div>
 
   );
@@ -1286,30 +1433,11 @@ export default function PrincipalDashboard() {
    STAT CARD
 ========================================================= */
 
-interface DashboardStatProps {
-
-  icon:
-    React.ReactNode;
-
-  label:
-    string;
-
-  value:
-    string | number;
-
-  note:
-    string;
-
-}
-
-
 function DashboardStat({
-
   icon,
   label,
   value,
   note,
-
 }: DashboardStatProps) {
 
   return (
