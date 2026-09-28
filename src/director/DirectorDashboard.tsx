@@ -4,10 +4,12 @@ import {
   GraduationCap,
   LayoutDashboard,
   LogOut,
+  Menu,
   School,
   Settings,
   UserPlus,
   Users,
+  X,
 } from "lucide-react";
 
 import {
@@ -18,6 +20,10 @@ import {
 import {
   useEffect,
   useState,
+} from "react";
+
+import type {
+  ReactNode,
 } from "react";
 
 import {
@@ -45,7 +51,6 @@ interface DashboardStats {
   classrooms: number;
 }
 
-
 interface StudentClassData {
   boys?: number | string;
   girls?: number | string;
@@ -53,6 +58,17 @@ interface StudentClassData {
   totalStudents?: number | string;
 }
 
+interface DashboardStatProps {
+  icon: ReactNode;
+  label: string;
+  value: string | number;
+  note: string;
+}
+
+
+/* =========================================================
+   DEFAULT STATS
+========================================================= */
 
 const EMPTY_STATS: DashboardStats = {
   principals: 0,
@@ -63,10 +79,12 @@ const EMPTY_STATS: DashboardStats = {
 
 
 /* =========================================================
-   NUMBER HELPER
+   HELPERS
 ========================================================= */
 
-function toNumber(value: unknown): number {
+function toNumber(
+  value: unknown
+): number {
   const number = Number(value);
 
   return Number.isFinite(number)
@@ -76,17 +94,12 @@ function toNumber(value: unknown): number {
 
 
 /* =========================================================
-   STUDENT TOTAL HELPER
+   STUDENT TOTAL
 ========================================================= */
 
 function getStudentTotal(
   data: Record<string, any>
 ): number {
-
-  /*
-    First preference:
-    saved total field
-  */
 
   const directTotal =
     toNumber(data.totalStudents);
@@ -95,11 +108,6 @@ function getStudentTotal(
     return directTotal;
   }
 
-
-  /*
-    Second preference:
-    boys + girls
-  */
 
   const boys =
     toNumber(data.totalBoys) ||
@@ -113,11 +121,6 @@ function getStudentTotal(
     return boys + girls;
   }
 
-
-  /*
-    Third preference:
-    calculate from classes array
-  */
 
   if (Array.isArray(data.classes)) {
 
@@ -140,20 +143,10 @@ function getStudentTotal(
         }
 
 
-        const classBoys =
-          toNumber(
-            classData.boys
-          );
-
-        const classGirls =
-          toNumber(
-            classData.girls
-          );
-
         return (
           total +
-          classBoys +
-          classGirls
+          toNumber(classData.boys) +
+          toNumber(classData.girls)
         );
 
       },
@@ -167,17 +160,12 @@ function getStudentTotal(
 
 
 /* =========================================================
-   TEACHER TOTAL HELPER
+   TEACHER TOTAL
 ========================================================= */
 
 function getTeacherTotal(
   data: Record<string, any>
 ): number {
-
-  /*
-    First preference:
-    totalTeachers
-  */
 
   const directTotal =
     toNumber(data.totalTeachers);
@@ -186,11 +174,6 @@ function getTeacherTotal(
     return directTotal;
   }
 
-
-  /*
-    Second:
-    male + female
-  */
 
   const male =
     toNumber(data.maleTeachers) ||
@@ -205,11 +188,6 @@ function getTeacherTotal(
   }
 
 
-  /*
-    Third:
-    teacher list array
-  */
-
   if (Array.isArray(data.teachers)) {
     return data.teachers.length;
   }
@@ -220,7 +198,7 @@ function getTeacherTotal(
 
 
 /* =========================================================
-   CLASSROOM HELPER
+   CLASSROOM TOTAL
 ========================================================= */
 
 function getClassroomTotal(
@@ -236,7 +214,7 @@ function getClassroomTotal(
 
 
 /* =========================================================
-   COMPONENT
+   DIRECTOR DASHBOARD
 ========================================================= */
 
 export default function DirectorDashboard() {
@@ -251,18 +229,38 @@ export default function DirectorDashboard() {
     getSession();
 
 
-  const [loading, setLoading] =
-    useState(true);
+  const [
+    loading,
+    setLoading,
+  ] = useState(true);
 
 
-  const [stats, setStats] =
-    useState<DashboardStats>(
-      EMPTY_STATS
-    );
+  const [
+    stats,
+    setStats,
+  ] = useState<DashboardStats>(
+    EMPTY_STATS
+  );
+
+
+  /* MOBILE SIDEBAR */
+
+  const [
+    sidebarOpen,
+    setSidebarOpen,
+  ] = useState(false);
+
+
+  /* LOGOUT MODAL */
+
+  const [
+    logoutModal,
+    setLogoutModal,
+  ] = useState(false);
 
 
   /* =======================================================
-     AUTH CHECK
+     AUTH
   ======================================================= */
 
   useEffect(() => {
@@ -289,7 +287,45 @@ export default function DirectorDashboard() {
 
 
   /* =======================================================
-     LOAD DASHBOARD DATA
+     CLOSE DRAWER WHEN ROUTE CHANGES
+  ======================================================= */
+
+  useEffect(() => {
+
+    setSidebarOpen(false);
+
+  }, [
+    location.pathname,
+  ]);
+
+
+  /* =======================================================
+     LOCK BODY SCROLL
+  ======================================================= */
+
+  useEffect(() => {
+
+    if (sidebarOpen) {
+      document.body.style.overflow =
+        "hidden";
+    } else {
+      document.body.style.overflow =
+        "";
+    }
+
+
+    return () => {
+      document.body.style.overflow =
+        "";
+    };
+
+  }, [
+    sidebarOpen,
+  ]);
+
+
+  /* =======================================================
+     DASHBOARD DATA
   ======================================================= */
 
   useEffect(() => {
@@ -317,13 +353,11 @@ export default function DirectorDashboard() {
         let classrooms = 0;
 
 
-        /* =================================================
-           PRINCIPALS
-        ================================================= */
+        /* PRINCIPALS */
 
         try {
 
-          const usersSnapshot =
+          const snapshot =
             await getDocs(
               collection(
                 db,
@@ -332,11 +366,11 @@ export default function DirectorDashboard() {
             );
 
 
-          usersSnapshot.forEach(
-            (userDocument) => {
+          snapshot.forEach(
+            (document) => {
 
               const data =
-                userDocument.data();
+                document.data();
 
 
               const role =
@@ -347,17 +381,13 @@ export default function DirectorDashboard() {
                   .toLowerCase();
 
 
-              if (role === "principal") {
+              if (
+                role === "principal"
+              ) {
                 principals++;
               }
 
             }
-          );
-
-
-          console.log(
-            "Principal count:",
-            principals
           );
 
         }
@@ -372,13 +402,11 @@ export default function DirectorDashboard() {
         }
 
 
-        /* =================================================
-           STUDENTS
-        ================================================= */
+        /* STUDENTS */
 
         try {
 
-          const studentSnapshot =
+          const snapshot =
             await getDocs(
               collection(
                 db,
@@ -387,35 +415,15 @@ export default function DirectorDashboard() {
             );
 
 
-          studentSnapshot.forEach(
-            (studentDocument) => {
-
-              const data =
-                studentDocument.data();
-
-
-              const schoolStudents =
-                getStudentTotal(data);
-
+          snapshot.forEach(
+            (document) => {
 
               students +=
-                schoolStudents;
-
-
-              console.log(
-                "Student document:",
-                studentDocument.id,
-                schoolStudents,
-                data
-              );
+                getStudentTotal(
+                  document.data()
+                );
 
             }
-          );
-
-
-          console.log(
-            "Total students:",
-            students
           );
 
         }
@@ -430,13 +438,11 @@ export default function DirectorDashboard() {
         }
 
 
-        /* =================================================
-           TEACHERS
-        ================================================= */
+        /* TEACHERS */
 
         try {
 
-          const teacherSnapshot =
+          const snapshot =
             await getDocs(
               collection(
                 db,
@@ -445,35 +451,15 @@ export default function DirectorDashboard() {
             );
 
 
-          teacherSnapshot.forEach(
-            (teacherDocument) => {
-
-              const data =
-                teacherDocument.data();
-
-
-              const schoolTeachers =
-                getTeacherTotal(data);
-
+          snapshot.forEach(
+            (document) => {
 
               teachers +=
-                schoolTeachers;
-
-
-              console.log(
-                "Teacher document:",
-                teacherDocument.id,
-                schoolTeachers,
-                data
-              );
+                getTeacherTotal(
+                  document.data()
+                );
 
             }
-          );
-
-
-          console.log(
-            "Total teachers:",
-            teachers
           );
 
         }
@@ -488,13 +474,11 @@ export default function DirectorDashboard() {
         }
 
 
-        /* =================================================
-           CLASSROOMS
-        ================================================= */
+        /* CLASSROOMS */
 
         try {
 
-          const infrastructureSnapshot =
+          const snapshot =
             await getDocs(
               collection(
                 db,
@@ -503,25 +487,15 @@ export default function DirectorDashboard() {
             );
 
 
-          infrastructureSnapshot.forEach(
-            (infrastructureDocument) => {
-
-              const data =
-                infrastructureDocument.data();
-
+          snapshot.forEach(
+            (document) => {
 
               classrooms +=
                 getClassroomTotal(
-                  data
+                  document.data()
                 );
 
             }
-          );
-
-
-          console.log(
-            "Total classrooms:",
-            classrooms
           );
 
         }
@@ -536,10 +510,6 @@ export default function DirectorDashboard() {
         }
 
 
-        /* =================================================
-           UPDATE DASHBOARD
-        ================================================= */
-
         if (!cancelled) {
 
           setStats({
@@ -548,7 +518,6 @@ export default function DirectorDashboard() {
             teachers,
             classrooms,
           });
-
 
           setLoading(false);
 
@@ -578,6 +547,11 @@ export default function DirectorDashboard() {
 
     clearSession();
 
+    setLogoutModal(false);
+
+    setSidebarOpen(false);
+
+
     navigate(
       "/login",
       {
@@ -586,18 +560,6 @@ export default function DirectorDashboard() {
     );
 
   };
-
-
-  /* =======================================================
-     SECURITY
-  ======================================================= */
-
-  if (
-    !session ||
-    session.role !== "director"
-  ) {
-    return null;
-  }
 
 
   /* =======================================================
@@ -616,6 +578,18 @@ export default function DirectorDashboard() {
 
 
   /* =======================================================
+     SECURITY
+  ======================================================= */
+
+  if (
+    !session ||
+    session.role !== "director"
+  ) {
+    return null;
+  }
+
+
+  /* =======================================================
      UI
   ======================================================= */
 
@@ -624,18 +598,40 @@ export default function DirectorDashboard() {
     <div className="director-dashboard">
 
 
-      {/* ===================================================
-          SIDEBAR
-      =================================================== */}
+      {/* ===============================================
+          MOBILE OVERLAY
+      =============================================== */}
 
-      <aside className="dashboard-sidebar">
+      <div
+        className={
+          sidebarOpen
+            ? "director-sidebar-overlay active"
+            : "director-sidebar-overlay"
+        }
+        onClick={() =>
+          setSidebarOpen(false)
+        }
+      />
+
+
+      {/* ===============================================
+          SIDEBAR
+      =============================================== */}
+
+      <aside
+        className={
+          sidebarOpen
+            ? "dashboard-sidebar mobile-open"
+            : "dashboard-sidebar"
+        }
+      >
 
 
         {/* BRAND */}
 
         <div className="dashboard-brand">
 
-          <School size={34} />
+          <School size={32} />
 
           <div>
 
@@ -648,6 +644,18 @@ export default function DirectorDashboard() {
             </span>
 
           </div>
+
+
+          <button
+            type="button"
+            className="director-sidebar-close"
+            onClick={() =>
+              setSidebarOpen(false)
+            }
+            aria-label="Close menu"
+          >
+            <X size={21} />
+          </button>
 
         </div>
 
@@ -686,7 +694,6 @@ export default function DirectorDashboard() {
 
         <nav>
 
-
           <Link
             to="/director"
             className={
@@ -695,7 +702,6 @@ export default function DirectorDashboard() {
                 : ""
             }
           >
-
             <LayoutDashboard
               size={18}
             />
@@ -703,7 +709,6 @@ export default function DirectorDashboard() {
             <span>
               Dashboard
             </span>
-
           </Link>
 
 
@@ -717,7 +722,6 @@ export default function DirectorDashboard() {
                 : ""
             }
           >
-
             <Building2
               size={18}
             />
@@ -725,7 +729,6 @@ export default function DirectorDashboard() {
             <span>
               Manage Schools
             </span>
-
           </Link>
 
 
@@ -739,15 +742,11 @@ export default function DirectorDashboard() {
                 : ""
             }
           >
-
-            <Users
-              size={18}
-            />
+            <Users size={18} />
 
             <span>
               Manage Principals
             </span>
-
           </Link>
 
 
@@ -761,7 +760,6 @@ export default function DirectorDashboard() {
                 : ""
             }
           >
-
             <UserPlus
               size={18}
             />
@@ -769,7 +767,6 @@ export default function DirectorDashboard() {
             <span>
               Appoint Principal
             </span>
-
           </Link>
 
 
@@ -783,15 +780,11 @@ export default function DirectorDashboard() {
                 : ""
             }
           >
-
-            <School
-              size={18}
-            />
+            <School size={18} />
 
             <span>
               All School Data
             </span>
-
           </Link>
 
 
@@ -805,7 +798,6 @@ export default function DirectorDashboard() {
                 : ""
             }
           >
-
             <FileBarChart
               size={18}
             />
@@ -813,7 +805,6 @@ export default function DirectorDashboard() {
             <span>
               Reports
             </span>
-
           </Link>
 
 
@@ -827,7 +818,6 @@ export default function DirectorDashboard() {
                 : ""
             }
           >
-
             <Settings
               size={18}
             />
@@ -835,7 +825,6 @@ export default function DirectorDashboard() {
             <span>
               Change Password
             </span>
-
           </Link>
 
         </nav>
@@ -845,12 +834,13 @@ export default function DirectorDashboard() {
 
         <button
           type="button"
-          onClick={handleLogout}
+          className="director-logout-button"
+          onClick={() =>
+            setLogoutModal(true)
+          }
         >
 
-          <LogOut
-            size={18}
-          />
+          <LogOut size={18} />
 
           <span>
             Logout
@@ -862,34 +852,59 @@ export default function DirectorDashboard() {
       </aside>
 
 
-
-      {/* ===================================================
+      {/* ===============================================
           MAIN
-      =================================================== */}
+      =============================================== */}
 
       <div className="dashboard-main">
 
 
-        {/* TOPBAR */}
+        {/* =============================================
+            TOP BAR
+        ============================================= */}
 
         <header className="dashboard-topbar">
 
-          <div>
 
-            <h1>
-              Director Dashboard
-            </h1>
+          <div className="director-topbar-left">
 
-            <p>
-              समूह साधन केंद्र कट्टीपार
-            </p>
+
+            {/* MOBILE MENU */}
+
+            <button
+              type="button"
+              className="director-mobile-menu"
+              onClick={() =>
+                setSidebarOpen(true)
+              }
+              aria-label="Open menu"
+            >
+
+              <Menu size={23} />
+
+            </button>
+
+
+            <div>
+
+              <h1>
+                Director Dashboard
+              </h1>
+
+              <p>
+                समूह साधन केंद्र कट्टीपार
+              </p>
+
+            </div>
 
           </div>
 
 
+          {/* USER */}
+
           <div className="topbar-user">
 
-            <div>
+            <div className="director-topbar-user-info">
 
               <strong>
                 {session.name ||
@@ -914,11 +929,13 @@ export default function DirectorDashboard() {
 
           </div>
 
+
         </header>
 
 
-
-        {/* CONTENT */}
+        {/* =============================================
+            CONTENT
+        ============================================= */}
 
         <main className="dashboard-content">
 
@@ -932,12 +949,9 @@ export default function DirectorDashboard() {
             </span>
 
             <h2>
-
               Welcome,{" "}
-
               {session.name ||
                 "Director"}
-
             </h2>
 
             <p>
@@ -946,135 +960,104 @@ export default function DirectorDashboard() {
               student information,
               teacher information,
               infrastructure and
-              consolidated school reports
-              from one place.
+              consolidated school
+              reports from one place.
             </p>
 
           </section>
 
 
-
-          {/* =================================================
-              STATISTICS
-          ================================================= */}
+          {/* ===========================================
+              STATS
+          =========================================== */}
 
           <section className="dashboard-stats">
 
 
-            {/* SCHOOLS */}
-
             <DashboardStat
-
               icon={
-                <School
-                  size={24}
-                />
+                <School size={24} />
               }
-
               label="Total Schools"
-
               value="18"
-
               note="17 school records currently available"
-
             />
 
 
-            {/* PRINCIPALS */}
-
             <DashboardStat
-
               icon={
-                <Users
-                  size={24}
-                />
+                <Users size={24} />
               }
-
               label="Principals"
-
               value={
                 loading
                   ? "..."
                   : stats.principals
               }
-
               note="Principal accounts"
-
             />
 
 
-            {/* STUDENTS */}
-
             <DashboardStat
-
               icon={
                 <GraduationCap
                   size={24}
                 />
               }
-
               label="Students"
-
               value={
                 loading
                   ? "..."
                   : stats.students
               }
-
               note="Total reported students"
-
             />
 
 
-            {/* TEACHERS */}
-
             <DashboardStat
-
               icon={
-                <Users
-                  size={24}
-                />
+                <Users size={24} />
               }
-
               label="Teachers"
-
               value={
                 loading
                   ? "..."
                   : stats.teachers
               }
-
-              note={`${stats.classrooms} classrooms reported`}
-
+              note={
+                `${stats.classrooms} classrooms reported`
+              }
             />
 
 
           </section>
 
 
-
-          {/* =================================================
+          {/* ===========================================
               QUICK ACTIONS
-          ================================================= */}
+          =========================================== */}
 
-          <h2
-            style={{
-              marginTop: "30px",
-              marginBottom: "15px",
-              color: "#214b65",
-              fontSize: "18px",
-            }}
-          >
-            Quick Actions
-          </h2>
+          <div className="director-section-heading">
+
+            <div>
+
+              <span>
+                MANAGEMENT
+              </span>
+
+              <h2>
+                Quick Actions
+              </h2>
+
+            </div>
+
+          </div>
 
 
           <section className="director-actions">
 
 
-            <Link
-              to="/director/schools"
-            >
+            <Link to="/director/schools">
 
               <Building2
                 size={24}
@@ -1092,10 +1075,7 @@ export default function DirectorDashboard() {
             </Link>
 
 
-
-            <Link
-              to="/director/create-principal"
-            >
+            <Link to="/director/create-principal">
 
               <UserPlus
                 size={24}
@@ -1113,14 +1093,9 @@ export default function DirectorDashboard() {
             </Link>
 
 
+            <Link to="/director/principals">
 
-            <Link
-              to="/director/principals"
-            >
-
-              <Users
-                size={24}
-              />
+              <Users size={24} />
 
               <strong>
                 Principal Accounts
@@ -1134,10 +1109,41 @@ export default function DirectorDashboard() {
             </Link>
 
 
+            <Link to="/director/reports">
 
-            <Link
-              to="/director/settings"
-            >
+              <FileBarChart
+                size={24}
+              />
+
+              <strong>
+                Reports
+              </strong>
+
+              <span>
+                View consolidated
+                school reports.
+              </span>
+
+            </Link>
+
+
+            <Link to="/director/school-data">
+
+              <School size={24} />
+
+              <strong>
+                All School Data
+              </strong>
+
+              <span>
+                View school-wise
+                information and data.
+              </span>
+
+            </Link>
+
+
+            <Link to="/director/settings">
 
               <Settings
                 size={24}
@@ -1160,12 +1166,88 @@ export default function DirectorDashboard() {
 
         </main>
 
+
       </div>
+
+
+      {/* ===============================================
+          LOGOUT MODAL
+      =============================================== */}
+
+      {logoutModal && (
+
+        <div
+          className="director-logout-modal-overlay"
+          onClick={() =>
+            setLogoutModal(false)
+          }
+        >
+
+          <div
+            className="director-logout-modal"
+            onClick={(event) =>
+              event.stopPropagation()
+            }
+          >
+
+            <div className="director-logout-modal-icon">
+
+              <LogOut size={27} />
+
+            </div>
+
+
+            <h2>
+              Logout
+            </h2>
+
+
+            <p>
+              Are you sure you want
+              to logout from the
+              Director Panel?
+            </p>
+
+
+            <div className="director-logout-actions">
+
+              <button
+                type="button"
+                className="director-logout-cancel"
+                onClick={() =>
+                  setLogoutModal(false)
+                }
+              >
+                Cancel
+              </button>
+
+
+              <button
+                type="button"
+                className="director-logout-confirm"
+                onClick={
+                  handleLogout
+                }
+              >
+
+                <LogOut size={16} />
+
+                Logout
+
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
+
 
     </div>
 
   );
-
 }
 
 
@@ -1173,26 +1255,11 @@ export default function DirectorDashboard() {
    STAT CARD
 ========================================================= */
 
-interface DashboardStatProps {
-
-  icon: React.ReactNode;
-
-  label: string;
-
-  value: string | number;
-
-  note: string;
-
-}
-
-
 function DashboardStat({
-
   icon,
   label,
   value,
   note,
-
 }: DashboardStatProps) {
 
   return (
@@ -1202,7 +1269,6 @@ function DashboardStat({
       <div>
         {icon}
       </div>
-
 
       <section>
 
@@ -1223,5 +1289,4 @@ function DashboardStat({
     </article>
 
   );
-
 }
