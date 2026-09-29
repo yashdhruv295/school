@@ -17562,3 +17562,1119 @@ div:first-child {
   }
 
 }
+/* =========================================================
+   DIRECTOR - MANAGE SCHOOL DATA
+========================================================= */
+
+.director-school-data-page,
+.director-school-control-page,
+.director-editor-page {
+  min-height: 100vh;
+
+  padding: 35px;
+
+  background: #f4f8fb;
+
+  color: #173f5d;
+}
+
+
+/* HEADER */
+
+.director-data-header,
+.director-school-control-header,
+.director-editor-top {
+  max-width: 1250px;
+
+  margin: 0 auto 25px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 20px;
+}
+
+.director-data-header span,
+.director-school-control-header span,
+.director-editor-top span,
+.director-control-heading > span {
+  color: #0780c8;
+
+  font-size: 10px;
+  font-weight: 900;
+
+  letter-spacing: 1.4px;
+}
+
+.director-data-header h1,
+.director-school-control-header h1,
+.director-editor-top h1 {
+  margin: 5px 0;
+
+  color: #173f5d;
+
+  font-size: 30px;
+}
+
+.director-data-header p,
+.director-school-control-header p,
+.director-editor-top p {
+  margin: 0;
+
+  color: #718797;
+
+  font-size: 12px;
+}
+
+.director-data-header > button,
+.director-school-control-header > button,
+.director-editor-top > button {
+  min-height: 42px;
+
+  padding: 0 16px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 7px;
+
+  border: 1px solid #d6e2e9;
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  color: #315b74;
+
+  font-size: 11px;
+  font-weight: 800;
+
+  cursor: pointer;
+}
+
+
+/* SUMMARY */
+
+.director-data-summary {
+  max-width: 1250px;
+
+  margin: 0 auto 22px;
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(3,1fr);
+
+  gap: 15px;
+}
+
+.director-data-summary article {
+  padding: 18px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 14px;
+
+  border: 1px solid #e0e9ef;
+  border-radius: 12px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 8px 25px
+    rgba(30,70,95,.06);
+}
+
+.director-data-summary article > div {
+  width: 48px;
+  height: 48px;
+
+  display: grid;
+  place-items: center;
+
+  flex: 0 0 48px;
+
+  border-radius: 10px;
+
+  background: #eaf6fd;
+
+  color: #0879bd;
+}
+
+.director-data-summary article section {
+  display: flex;
+  flex-direction: column;
+
+  gap: 3px;
+}
+
+.director-data-summary article span {
+  color: #7b909d;
+
+  font-size: 10px;
+}
+
+.director-data-summary article strong {
+  color: #173f5d;
+
+  font-size: 18px;
+}
+
+
+/* SEARCH */
+
+.director-data-search {
+  max-width: 1250px;
+
+  min-height: 52px;
+
+  margin: 0 auto 20px;
+
+  padding: 0 17px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  border: 1px solid #dce6ec;
+  border-radius: 10px;
+
+  background: #ffffff;
+
+  color: #7690a0;
+}
+
+.director-data-search input {
+  width: 100%;
+
+  border: none;
+  outline: none;
+
+  background: transparent;
+
+  color: #173f5d;
+
+  font-size: 12px;
+}
+
+
+/* SCHOOL SELECTION */
+
+.director-school-selection-grid {
+  max-width: 1250px;
+
+  margin: auto;
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(3,minmax(0,1fr));
+
+  gap: 15px;
+}
+
+.director-school-selection-card {
+  min-width: 0;
+
+  padding: 20px;
+
+  display: flex;
+  flex-direction: column;
+
+  border: 1px solid #dfe8ed;
+  border-radius: 13px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 10px 25px
+    rgba(20,60,85,.06);
+}
+
+.director-school-selection-icon {
+  width: 48px;
+  height: 48px;
+
+  margin-bottom: 14px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 10px;
+
+  background: #e9f6fd;
+
+  color: #087bc0;
+}
+
+.director-school-selection-content {
+  flex: 1;
+}
+
+.director-school-selection-content > span {
+  color: #e39112;
+
+  font-size: 9px;
+  font-weight: 900;
+
+  letter-spacing: 1px;
+}
+
+.director-school-selection-content h2 {
+  margin: 7px 0;
+
+  color: #173f5d;
+
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.director-school-selection-content p {
+  margin: 0;
+
+  color: #81939e;
+
+  font-size: 10px;
+}
+
+.director-school-selection-card > button {
+  min-height: 43px;
+
+  margin-top: 18px;
+  padding: 0 14px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  border: none;
+  border-radius: 8px;
+
+  background: #075f99;
+
+  color: #ffffff;
+
+  font-size: 10px;
+  font-weight: 800;
+
+  cursor: pointer;
+}
+
+
+/* SELECTED SCHOOL */
+
+.director-selected-school-info {
+  max-width: 1250px;
+
+  margin: 0 auto 28px;
+  padding: 22px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 17px;
+
+  border-radius: 13px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #075985,
+      #0b7db5
+    );
+
+  color: #ffffff;
+}
+
+.director-selected-school-info > div {
+  width: 60px;
+  height: 60px;
+
+  display: grid;
+  place-items: center;
+
+  flex: 0 0 60px;
+
+  border-radius: 12px;
+
+  background:
+    rgba(255,255,255,.14);
+}
+
+.director-selected-school-info section {
+  display: flex;
+  flex-direction: column;
+
+  gap: 4px;
+}
+
+.director-selected-school-info span {
+  color: #bde7ff;
+
+  font-size: 9px;
+  font-weight: 900;
+
+  letter-spacing: 1.3px;
+}
+
+.director-selected-school-info strong {
+  font-size: 18px;
+}
+
+.director-selected-school-info small {
+  color: #d7effb;
+
+  font-size: 10px;
+}
+
+
+/* MANAGEMENT */
+
+.director-control-heading,
+.director-school-control-grid {
+  max-width: 1250px;
+
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.director-control-heading {
+  margin-bottom: 18px;
+}
+
+.director-control-heading h2 {
+  margin: 5px 0;
+
+  font-size: 21px;
+}
+
+.director-control-heading p {
+  margin: 0;
+
+  color: #7a8f9d;
+
+  font-size: 11px;
+}
+
+.director-school-control-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3,minmax(0,1fr));
+
+  gap: 15px;
+}
+
+.director-management-card {
+  min-height: 145px;
+
+  padding: 20px;
+
+  display: flex;
+  align-items: flex-start;
+
+  gap: 14px;
+
+  position: relative;
+
+  border: 1px solid #dfe8ed;
+  border-radius: 12px;
+
+  background: #ffffff;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 8px 24px
+    rgba(20,60,85,.05);
+
+  transition:
+    .2s ease;
+}
+
+.director-management-card:hover {
+  transform:
+    translateY(-3px);
+
+  border-color: #93cbe8;
+
+  box-shadow:
+    0 12px 30px
+    rgba(20,80,115,.10);
+}
+
+.director-management-card > div {
+  width: 47px;
+  height: 47px;
+
+  display: grid;
+  place-items: center;
+
+  flex: 0 0 47px;
+
+  border-radius: 10px;
+
+  background: #eaf6fd;
+
+  color: #0879bd;
+}
+
+.director-management-card section {
+  display: flex;
+  flex-direction: column;
+
+  gap: 7px;
+}
+
+.director-management-card strong {
+  color: #173f5d;
+
+  font-size: 13px;
+}
+
+.director-management-card section span {
+  padding-right: 15px;
+
+  color: #7d909c;
+
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.director-management-arrow {
+  position: absolute;
+
+  right: 15px;
+  bottom: 13px;
+
+  color: #0879bd;
+
+  font-weight: 900;
+}
+
+
+/* EDITOR */
+
+.director-editor-form {
+  max-width: 900px;
+
+  margin: auto;
+  padding: 27px;
+
+  border: 1px solid #dfe8ed;
+  border-radius: 14px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 10px 30px
+    rgba(20,60,85,.06);
+}
+
+.director-editor-form-heading {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 13px;
+
+  border-bottom:
+    1px solid #e7eef2;
+}
+
+.director-editor-form-heading svg {
+  color: #0879bd;
+}
+
+.director-editor-form-heading h2 {
+  margin: 0;
+
+  color: #173f5d;
+
+  font-size: 19px;
+}
+
+.director-editor-form-heading p {
+  margin: 4px 0 0;
+
+  color: #80939e;
+
+  font-size: 10px;
+}
+
+.director-editor-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2,minmax(0,1fr));
+
+  gap: 17px;
+}
+
+.director-editor-grid label {
+  display: flex;
+  flex-direction: column;
+
+  gap: 7px;
+
+  color: #38586c;
+
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.director-editor-grid input,
+.director-editor-grid textarea {
+  width: 100%;
+
+  padding: 12px 13px;
+
+  border: 1px solid #d9e4ea;
+  border-radius: 8px;
+
+  outline: none;
+
+  background: #fbfdfe;
+
+  color: #173f5d;
+
+  font: inherit;
+  font-weight: 500;
+}
+
+.director-editor-grid input:focus,
+.director-editor-grid textarea:focus {
+  border-color: #2795ce;
+
+  box-shadow:
+    0 0 0 3px
+    rgba(39,149,206,.10);
+}
+
+.director-editor-full {
+  grid-column: 1 / -1;
+}
+
+.director-editor-message {
+  margin-top: 18px;
+  padding: 11px;
+
+  border-radius: 7px;
+
+  background: #edf8ef;
+
+  color: #25743c;
+
+  font-size: 10px;
+}
+
+.director-editor-save {
+  min-height: 45px;
+
+  margin-top: 20px;
+  padding: 0 20px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  border: none;
+  border-radius: 8px;
+
+  background: #0877b5;
+
+  color: #ffffff;
+
+  font-size: 11px;
+  font-weight: 800;
+
+  cursor: pointer;
+}
+
+
+/* EMPTY */
+
+.director-data-empty {
+  max-width: 500px;
+
+  margin: 50px auto;
+  padding: 35px;
+
+  border-radius: 13px;
+
+  background: #ffffff;
+
+  text-align: center;
+
+  color: #6d8390;
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 900px) {
+
+  .director-school-selection-grid,
+  .director-school-control-grid {
+    grid-template-columns:
+      repeat(2,minmax(0,1fr));
+  }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 650px) {
+
+  .director-school-data-page,
+  .director-school-control-page,
+  .director-editor-page {
+    padding:
+      20px 12px 35px;
+  }
+
+  .director-data-header,
+  .director-school-control-header,
+  .director-editor-top {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .director-data-header h1,
+  .director-school-control-header h1,
+  .director-editor-top h1 {
+    font-size: 22px;
+  }
+
+  .director-data-summary {
+    grid-template-columns:
+      repeat(2,minmax(0,1fr));
+
+    gap: 8px;
+  }
+
+  .director-data-summary article {
+    min-width: 0;
+
+    padding: 13px;
+  }
+
+  .director-data-summary article > div {
+    width: 39px;
+    height: 39px;
+
+    flex-basis: 39px;
+  }
+
+  .director-data-summary article strong {
+    font-size: 13px;
+  }
+
+  .director-school-selection-grid,
+  .director-school-control-grid {
+    grid-template-columns:
+      repeat(2,minmax(0,1fr));
+
+    gap: 9px;
+  }
+
+  .director-school-selection-card {
+    padding: 14px;
+  }
+
+  .director-school-selection-content h2 {
+    font-size: 11px;
+  }
+
+  .director-school-selection-card > button {
+    padding: 0 10px;
+
+    font-size: 9px;
+  }
+
+  .director-management-card {
+    min-height: 170px;
+
+    padding: 14px;
+
+    flex-direction: column;
+  }
+
+  .director-management-card strong {
+    font-size: 11px;
+  }
+
+  .director-management-card section span {
+    font-size: 8px;
+  }
+
+  .director-selected-school-info {
+    padding: 16px;
+  }
+
+  .director-selected-school-info strong {
+    font-size: 13px;
+  }
+
+  .director-editor-grid {
+    grid-template-columns:
+      1fr;
+  }
+
+  .director-editor-full {
+    grid-column: auto;
+  }
+
+}
+
+
+/* VERY SMALL MOBILE */
+
+@media (max-width: 390px) {
+
+  .director-data-summary {
+    grid-template-columns:
+      1fr;
+  }
+
+}
+/* =========================================================
+   DIRECTOR SCHOOL DATA - EXTRA COMPONENTS
+========================================================= */
+
+.director-editor-loading {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 30px;
+  border-radius: 12px;
+  background: #fff;
+  text-align: center;
+  color: #718797;
+}
+
+
+/* TOTAL CARDS */
+
+.director-student-total-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 25px;
+}
+
+.director-student-total-grid article {
+  padding: 17px;
+  border: 1px solid #e0e9ef;
+  border-radius: 10px;
+  background: #f7fbfd;
+  text-align: center;
+}
+
+.director-student-total-grid span {
+  display: block;
+  margin-bottom: 5px;
+  color: #718797;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.director-student-total-grid strong {
+  color: #075c91;
+  font-size: 25px;
+}
+
+
+/* CLASS TABLE */
+
+.director-class-table-wrapper,
+.director-record-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.director-class-table,
+.director-record-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.director-class-table th,
+.director-class-table td,
+.director-record-table th,
+.director-record-table td {
+  padding: 11px;
+  border-bottom: 1px solid #e4ebef;
+  text-align: left;
+  font-size: 11px;
+}
+
+.director-class-table th,
+.director-record-table th {
+  background: #f2f8fb;
+  color: #315b74;
+}
+
+.director-class-table input {
+  width: 100px;
+  padding: 8px;
+  border: 1px solid #d6e3ea;
+  border-radius: 6px;
+}
+
+
+/* SELECT */
+
+.director-editor-grid select {
+  width: 100%;
+  padding: 12px 13px;
+  border: 1px solid #d9e4ea;
+  border-radius: 8px;
+  outline: none;
+  background: #fbfdfe;
+  color: #173f5d;
+}
+
+
+/* FACILITIES */
+
+.director-facility-heading {
+  margin: 25px 0 12px;
+  color: #214b65;
+  font-size: 15px;
+}
+
+.director-facility-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.director-facility-item {
+  min-height: 50px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid #dde7ec;
+  border-radius: 8px;
+  background: #f8fbfd;
+  cursor: pointer;
+  color: #38586c;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.director-facility-item input {
+  width: 17px;
+  height: 17px;
+}
+
+
+/* STUDENT RECORDS */
+
+.director-record-list {
+  max-width: 1100px;
+  margin: 25px auto;
+  padding: 25px;
+  border: 1px solid #dfe8ed;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.director-record-list-header {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+.director-record-list-header h2 {
+  margin: 0;
+  color: #214b65;
+}
+
+.director-record-list-header span {
+  color: #81939e;
+  font-size: 10px;
+}
+
+.director-record-list-header input {
+  width: 280px;
+  max-width: 100%;
+  padding: 11px 13px;
+  border: 1px solid #d9e4ea;
+  border-radius: 8px;
+  outline: none;
+}
+
+.director-record-table button {
+  margin: 2px;
+  padding: 7px 11px;
+  border: 0;
+  border-radius: 6px;
+  background: #0877b5;
+  color: #fff;
+  cursor: pointer;
+}
+
+
+/* REPORT */
+
+.director-report-school,
+.director-report-grid,
+.director-report-details {
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.director-report-school {
+  margin-bottom: 18px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #075985, #0b7db5);
+  color: #fff;
+}
+
+.director-report-school h2 {
+  margin: 3px 0;
+}
+
+.director-report-school p,
+.director-report-school span {
+  margin: 0;
+  color: #d7effb;
+  font-size: 10px;
+}
+
+.director-report-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 13px;
+}
+
+.director-report-card {
+  padding: 20px;
+  border: 1px solid #dfe8ed;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.director-report-card > div {
+  width: 45px;
+  height: 45px;
+  margin-bottom: 13px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: #eaf6fd;
+  color: #0879bd;
+}
+
+.director-report-card span,
+.director-report-card small {
+  display: block;
+  color: #7d909c;
+  font-size: 10px;
+}
+
+.director-report-card strong {
+  display: block;
+  margin: 5px 0;
+  color: #173f5d;
+  font-size: 27px;
+}
+
+.director-report-details {
+  margin-top: 18px;
+  padding: 22px;
+  border: 1px solid #dfe8ed;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.director-report-details h2 {
+  margin-top: 0;
+  color: #214b65;
+}
+
+.director-report-details > div {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.director-report-details article {
+  padding: 14px;
+  border-radius: 8px;
+  background: #f6fafc;
+}
+
+.director-report-details span {
+  display: block;
+  color: #81939e;
+  font-size: 9px;
+}
+
+.director-report-details strong {
+  display: block;
+  margin-top: 4px;
+  color: #214b65;
+  font-size: 12px;
+}
+
+
+/* MOBILE */
+
+@media (max-width: 650px) {
+
+  .director-student-total-grid,
+  .director-report-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .director-student-total-grid article:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .director-facility-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .director-record-list {
+    padding: 15px;
+  }
+
+  .director-record-list-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .director-record-list-header input {
+    width: 100%;
+  }
+
+  .director-report-details > div {
+    grid-template-columns: 1fr;
+  }
+
+}

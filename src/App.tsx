@@ -4,6 +4,9 @@ import {
   Route,
 } from "react-router-dom";
 
+import type { ReactNode } from "react";
+
+
 /* =========================================================
    PUBLIC COMPONENTS
 ========================================================= */
@@ -61,12 +64,28 @@ import DirectorSchoolStudents from "./director/DirectorSchoolStudents";
 
 
 /* =========================================================
+   DIRECTOR SCHOOL DATA MANAGEMENT
+========================================================= */
+
+import ManageSchoolData from "./director/ManageSchoolData";
+import DirectorSchoolData from "./director/DirectorSchoolData";
+import EditSchoolProfile from "./director/EditSchoolProfile";
+
+import DirectorStudentData from "./director/DirectorStudentData";
+import DirectorStudentRecords from "./director/DirectorStudentRecords";
+import DirectorTeacherData from "./director/DirectorTeacherData";
+import DirectorInfrastructure from "./director/DirectorInfrastructure";
+import DirectorSchoolReport from "./director/DirectorSchoolReport";
+
+
+/* =========================================================
    PUBLIC LAYOUT
 ========================================================= */
 
 interface PublicLayoutProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
+
 
 function PublicLayout({
   children,
@@ -121,6 +140,7 @@ function NotFoundPage() {
             SCHOOL MANAGEMENT PORTAL
           </p>
 
+
           <h1
             style={{
               margin: "0 0 15px",
@@ -131,6 +151,7 @@ function NotFoundPage() {
             404 - Page Not Found
           </h1>
 
+
           <p
             style={{
               color: "#708090",
@@ -139,6 +160,7 @@ function NotFoundPage() {
           >
             The page you are looking for does not exist.
           </p>
+
 
           <a
             href="#/"
@@ -175,9 +197,13 @@ export default function App() {
 
       <Routes>
 
+
         {/* =================================================
             PUBLIC ROUTES
         ================================================= */}
+
+
+        {/* HOME */}
 
         <Route
           path="/"
@@ -189,6 +215,8 @@ export default function App() {
         />
 
 
+        {/* ABOUT */}
+
         <Route
           path="/about"
           element={
@@ -198,6 +226,8 @@ export default function App() {
           }
         />
 
+
+        {/* SCHOOL DIRECTORY */}
 
         <Route
           path="/schools"
@@ -209,6 +239,8 @@ export default function App() {
         />
 
 
+        {/* PUBLIC SCHOOL DETAILS */}
+
         <Route
           path="/schools/:id"
           element={
@@ -218,6 +250,8 @@ export default function App() {
           }
         />
 
+
+        {/* ACADEMIC CALENDAR */}
 
         <Route
           path="/calendar"
@@ -229,6 +263,8 @@ export default function App() {
         />
 
 
+        {/* TRAINING AND RESOURCES */}
+
         <Route
           path="/resources"
           element={
@@ -238,6 +274,8 @@ export default function App() {
           }
         />
 
+
+        {/* BEST PRACTICES */}
 
         <Route
           path="/best-practices"
@@ -249,6 +287,8 @@ export default function App() {
         />
 
 
+        {/* PHOTO GALLERY */}
+
         <Route
           path="/gallery"
           element={
@@ -258,6 +298,8 @@ export default function App() {
           }
         />
 
+
+        {/* DOWNLOADS */}
 
         <Route
           path="/downloads"
@@ -269,6 +311,8 @@ export default function App() {
         />
 
 
+        {/* CONTACT */}
+
         <Route
           path="/contact"
           element={
@@ -278,6 +322,8 @@ export default function App() {
           }
         />
 
+
+        {/* LOGIN */}
 
         <Route
           path="/login"
@@ -307,6 +353,9 @@ export default function App() {
             DIRECTOR ROUTES
         ================================================= */}
 
+
+        {/* DIRECTOR DASHBOARD */}
+
         <Route
           path="/director"
           element={
@@ -314,6 +363,8 @@ export default function App() {
           }
         />
 
+
+        {/* MANAGE SCHOOLS */}
 
         <Route
           path="/director/schools"
@@ -323,6 +374,8 @@ export default function App() {
         />
 
 
+        {/* EXISTING SCHOOL STUDENT VIEW */}
+
         <Route
           path="/director/school/:id"
           element={
@@ -330,6 +383,8 @@ export default function App() {
           }
         />
 
+
+        {/* MANAGE PRINCIPALS */}
 
         <Route
           path="/director/principals"
@@ -339,6 +394,8 @@ export default function App() {
         />
 
 
+        {/* CREATE / APPOINT PRINCIPAL */}
+
         <Route
           path="/director/create-principal"
           element={
@@ -346,6 +403,8 @@ export default function App() {
           }
         />
 
+
+        {/* ALL SCHOOL DATA */}
 
         <Route
           path="/director/school-data"
@@ -355,6 +414,8 @@ export default function App() {
         />
 
 
+        {/* DIRECTOR REPORTS */}
+
         <Route
           path="/director/reports"
           element={
@@ -362,6 +423,8 @@ export default function App() {
           }
         />
 
+
+        {/* DIRECTOR SETTINGS */}
 
         <Route
           path="/director/settings"
@@ -372,8 +435,96 @@ export default function App() {
 
 
         {/* =================================================
+            DIRECTOR - MANAGE SCHOOL DATA
+        ================================================= */}
+
+
+        {/* SELECT SCHOOL */}
+
+        <Route
+          path="/director/manage-data"
+          element={
+            <ManageSchoolData />
+          }
+        />
+
+
+        {/* SELECTED SCHOOL CONTROL CENTER */}
+
+        <Route
+          path="/director/manage-data/:schoolId"
+          element={
+            <DirectorSchoolData />
+          }
+        />
+
+
+        {/* EDIT SCHOOL PROFILE */}
+
+        <Route
+          path="/director/manage-data/:schoolId/profile"
+          element={
+            <EditSchoolProfile />
+          }
+        />
+
+
+        {/* STUDENT SUMMARY */}
+
+        <Route
+          path="/director/manage-data/:schoolId/students"
+          element={
+            <DirectorStudentData />
+          }
+        />
+
+
+        {/* INDIVIDUAL STUDENT RECORDS */}
+
+        <Route
+          path="/director/manage-data/:schoolId/student-records"
+          element={
+            <DirectorStudentRecords />
+          }
+        />
+
+
+        {/* TEACHER DATA */}
+
+        <Route
+          path="/director/manage-data/:schoolId/teachers"
+          element={
+            <DirectorTeacherData />
+          }
+        />
+
+
+        {/* INFRASTRUCTURE */}
+
+        <Route
+          path="/director/manage-data/:schoolId/infrastructure"
+          element={
+            <DirectorInfrastructure />
+          }
+        />
+
+
+        {/* SCHOOL REPORT */}
+
+        <Route
+          path="/director/manage-data/:schoolId/report"
+          element={
+            <DirectorSchoolReport />
+          }
+        />
+
+
+        {/* =================================================
             PRINCIPAL ROUTES
         ================================================= */}
+
+
+        {/* PRINCIPAL DASHBOARD */}
 
         <Route
           path="/principal"
@@ -383,6 +534,8 @@ export default function App() {
         />
 
 
+        {/* SCHOOL PROFILE */}
+
         <Route
           path="/principal/profile"
           element={
@@ -390,6 +543,8 @@ export default function App() {
           }
         />
 
+
+        {/* STUDENT SUMMARY */}
 
         <Route
           path="/principal/students"
@@ -399,6 +554,8 @@ export default function App() {
         />
 
 
+        {/* INDIVIDUAL STUDENT RECORDS */}
+
         <Route
           path="/principal/students-list"
           element={
@@ -406,6 +563,8 @@ export default function App() {
           }
         />
 
+
+        {/* TEACHER DATA */}
 
         <Route
           path="/principal/teachers"
@@ -415,6 +574,8 @@ export default function App() {
         />
 
 
+        {/* INFRASTRUCTURE */}
+
         <Route
           path="/principal/infrastructure"
           element={
@@ -423,6 +584,8 @@ export default function App() {
         />
 
 
+        {/* MONTHLY / SCHOOL REPORT */}
+
         <Route
           path="/principal/report"
           element={
@@ -430,6 +593,8 @@ export default function App() {
           }
         />
 
+
+        {/* PRINCIPAL SETTINGS */}
 
         <Route
           path="/principal/settings"
@@ -449,6 +614,7 @@ export default function App() {
             <NotFoundPage />
           }
         />
+
 
       </Routes>
 
