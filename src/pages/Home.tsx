@@ -504,7 +504,7 @@ export default function Home() {
               className="home-primary-button"
             >
 
-              <School size={18} />
+              <School size={17} />
 
               शाळा पहा
 
@@ -518,7 +518,7 @@ export default function Home() {
               className="home-secondary-button"
             >
 
-              <LogIn size={18} />
+              <LogIn size={17} />
 
               सुरक्षित लॉगिन
 
@@ -558,7 +558,7 @@ export default function Home() {
                 </span>
 
                 <strong>
-                  18
+                  17
                 </strong>
 
                 <small>
