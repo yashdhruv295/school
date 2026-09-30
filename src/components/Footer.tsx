@@ -69,12 +69,12 @@ export default function Footer() {
 
           <p className="footer-contact">
             <Phone size={17} />
-            +91 XXXXX XXXXX
+           +91 94057 29316
           </p>
 
           <p className="footer-contact">
             <Mail size={17} />
-            example@gmail.com
+           mahi.manju86@gmail.com
           </p>
         </div>
       </div>

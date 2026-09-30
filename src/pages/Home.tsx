@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+
 import { Link } from "react-router-dom";
 
 import {
@@ -52,9 +53,9 @@ interface ClassRangeData {
 
 interface ClassRangeSummary {
   class1to5: ClassRangeData;
-  class6to7: ClassRangeData;
-  class8to9: ClassRangeData;
-  class10: ClassRangeData;
+  class6to8: ClassRangeData;
+  class9to10: ClassRangeData;
+  class11to12: ClassRangeData;
 }
 
 
@@ -83,19 +84,20 @@ const initialSummary: HomeSummary = {
 };
 
 
-const createEmptyClassRange = (): ClassRangeData => ({
-  boys: 0,
-  girls: 0,
-  total: 0,
-});
+const createEmptyClassRange =
+  (): ClassRangeData => ({
+    boys: 0,
+    girls: 0,
+    total: 0,
+  });
 
 
 const createInitialClassSummary =
   (): ClassRangeSummary => ({
     class1to5: createEmptyClassRange(),
-    class6to7: createEmptyClassRange(),
-    class8to9: createEmptyClassRange(),
-    class10: createEmptyClassRange(),
+    class6to8: createEmptyClassRange(),
+    class9to10: createEmptyClassRange(),
+    class11to12: createEmptyClassRange(),
   });
 
 
@@ -104,11 +106,15 @@ const createInitialClassSummary =
 ========================================================= */
 
 export default function Home() {
-
   const [summary, setSummary] =
-    useState<HomeSummary>(initialSummary);
+    useState<HomeSummary>(
+      initialSummary
+    );
 
-  const [classSummary, setClassSummary] =
+  const [
+    classSummary,
+    setClassSummary,
+  ] =
     useState<ClassRangeSummary>(
       createInitialClassSummary()
     );
@@ -122,334 +128,339 @@ export default function Home() {
   ========================================================= */
 
   useEffect(() => {
-
-    const loadHomeData = async () => {
-
-      try {
-
-        setLoading(true);
+    const loadHomeData =
+      async () => {
+        try {
+          setLoading(true);
 
 
-        /* -----------------------------------------------------
-           LOAD COLLECTIONS
-        ----------------------------------------------------- */
+          /* -----------------------------------------------------
+             LOAD COLLECTIONS
+          ----------------------------------------------------- */
 
-        const [
-          studentSnapshot,
-          teacherSnapshot,
-          infrastructureSnapshot,
-        ] = await Promise.all([
+          const [
+            studentSnapshot,
+            teacherSnapshot,
+            infrastructureSnapshot,
+          ] =
+            await Promise.all([
+              getDocs(
+                collection(
+                  db,
+                  "studentData"
+                )
+              ),
 
-          getDocs(
-            collection(db, "studentData")
-          ),
+              getDocs(
+                collection(
+                  db,
+                  "teacherData"
+                )
+              ),
 
-          getDocs(
-            collection(db, "teacherData")
-          ),
-
-          getDocs(
-            collection(
-              db,
-              "infrastructureData"
-            )
-          ),
-
-        ]);
-
-
-        /* -----------------------------------------------------
-           SUMMARY VARIABLES
-        ----------------------------------------------------- */
-
-        let totalStudents = 0;
-        let totalBoys = 0;
-        let totalGirls = 0;
-
-        let totalTeachers = 0;
-        let maleTeachers = 0;
-        let femaleTeachers = 0;
-
-        let totalClassrooms = 0;
-        let usableClassrooms = 0;
+              getDocs(
+                collection(
+                  db,
+                  "infrastructureData"
+                )
+              ),
+            ]);
 
 
-        /* -----------------------------------------------------
-           CLASS RANGE VARIABLES
-        ----------------------------------------------------- */
+          /* -----------------------------------------------------
+             SUMMARY VARIABLES
+          ----------------------------------------------------- */
 
-        const rangeSummary =
-          createInitialClassSummary();
+          let totalStudents = 0;
+          let totalBoys = 0;
+          let totalGirls = 0;
 
+          let totalTeachers = 0;
+          let maleTeachers = 0;
+          let femaleTeachers = 0;
 
-        /* =====================================================
-           STUDENT DATA
-        ===================================================== */
-
-        studentSnapshot.forEach(
-          (documentSnapshot) => {
-
-            const data =
-              documentSnapshot.data();
+          let totalClassrooms = 0;
+          let usableClassrooms = 0;
 
 
-            /* -------------------------------------------------
-               OVERALL TOTAL
-            ------------------------------------------------- */
+          /* -----------------------------------------------------
+             CLASS RANGE VARIABLES
+          ----------------------------------------------------- */
 
-            totalStudents +=
-              Number(
-                data.totalStudents
-              ) || 0;
-
-            totalBoys +=
-              Number(
-                data.totalBoys
-              ) || 0;
-
-            totalGirls +=
-              Number(
-                data.totalGirls
-              ) || 0;
+          const rangeSummary =
+            createInitialClassSummary();
 
 
-            /* -------------------------------------------------
-               CLASS-WISE DATA
-            ------------------------------------------------- */
+          /* =====================================================
+             STUDENT DATA
+          ===================================================== */
 
-            const classes: StudentClassRecord[] =
-              Array.isArray(data.classes)
-                ? data.classes
-                : [];
+          studentSnapshot.forEach(
+            (documentSnapshot) => {
+              const data =
+                documentSnapshot.data();
 
 
-            classes.forEach(
-              (classData) => {
+              /* -------------------------------------------------
+                 OVERALL TOTAL
+              ------------------------------------------------- */
 
-                /*
-                  Supports values such as:
+              totalStudents +=
+                Number(
+                  data.totalStudents
+                ) || 0;
 
-                  "1"
-                  "Class 1"
-                  "इयत्ता 1"
-                */
+              totalBoys +=
+                Number(
+                  data.totalBoys
+                ) || 0;
 
-                const rawClassName =
-                  String(
-                    classData.className ?? ""
-                  );
+              totalGirls +=
+                Number(
+                  data.totalGirls
+                ) || 0;
 
-                const match =
-                  rawClassName.match(/\d+/);
 
-                if (!match) {
-                  return;
+              /* -------------------------------------------------
+                 CLASS-WISE DATA
+              ------------------------------------------------- */
+
+              const classes:
+                StudentClassRecord[] =
+                Array.isArray(
+                  data.classes
+                )
+                  ? data.classes
+                  : [];
+
+
+              classes.forEach(
+                (classData) => {
+                  /*
+                    Supported class names:
+
+                    "1"
+                    "Class 1"
+                    "इयत्ता 1"
+
+                    etc.
+                  */
+
+                  const rawClassName =
+                    String(
+                      classData.className ??
+                        ""
+                    );
+
+
+                  const match =
+                    rawClassName.match(
+                      /\d+/
+                    );
+
+
+                  if (!match) {
+                    return;
+                  }
+
+
+                  const classNumber =
+                    Number(match[0]);
+
+
+                  const boys =
+                    Number(
+                      classData.boys
+                    ) || 0;
+
+
+                  const girls =
+                    Number(
+                      classData.girls
+                    ) || 0;
+
+
+                  let target:
+                    | ClassRangeData
+                    | null = null;
+
+
+                  /* =============================================
+                     CLASS 1 TO 5
+                  ============================================= */
+
+                  if (
+                    classNumber >= 1 &&
+                    classNumber <= 5
+                  ) {
+                    target =
+                      rangeSummary
+                        .class1to5;
+                  }
+
+
+                  /* =============================================
+                     CLASS 6 TO 8
+                  ============================================= */
+
+                  else if (
+                    classNumber >= 6 &&
+                    classNumber <= 8
+                  ) {
+                    target =
+                      rangeSummary
+                        .class6to8;
+                  }
+
+
+                  /* =============================================
+                     CLASS 9 TO 10
+                  ============================================= */
+
+                  else if (
+                    classNumber >= 9 &&
+                    classNumber <= 10
+                  ) {
+                    target =
+                      rangeSummary
+                        .class9to10;
+                  }
+
+
+                  /* =============================================
+                     CLASS 11 TO 12
+                  ============================================= */
+
+                  else if (
+                    classNumber >= 11 &&
+                    classNumber <= 12
+                  ) {
+                    target =
+                      rangeSummary
+                        .class11to12;
+                  }
+
+
+                  /* =============================================
+                     ADD BOYS + GIRLS
+                  ============================================= */
+
+                  if (target) {
+                    target.boys += boys;
+
+                    target.girls +=
+                      girls;
+
+                    target.total +=
+                      boys + girls;
+                  }
                 }
+              );
+            }
+          );
 
 
-                const classNumber =
-                  Number(match[0]);
+          /* =====================================================
+             TEACHER DATA
+          ===================================================== */
 
+          teacherSnapshot.forEach(
+            (documentSnapshot) => {
+              const data =
+                documentSnapshot.data();
 
-                const boys =
-                  Number(
-                    classData.boys
-                  ) || 0;
 
-                const girls =
-                  Number(
-                    classData.girls
-                  ) || 0;
+              totalTeachers +=
+                Number(
+                  data.totalTeachers
+                ) || 0;
 
 
-                let target:
-                  | ClassRangeData
-                  | null = null;
+              maleTeachers +=
+                Number(
+                  data.maleTeachers
+                ) || 0;
 
 
-                /* CLASS 1 TO 5 */
+              femaleTeachers +=
+                Number(
+                  data.femaleTeachers
+                ) || 0;
+            }
+          );
 
-                if (
-                  classNumber >= 1 &&
-                  classNumber <= 5
-                ) {
 
-                  target =
-                    rangeSummary.class1to5;
+          /* =====================================================
+             INFRASTRUCTURE DATA
+          ===================================================== */
 
-                }
+          infrastructureSnapshot.forEach(
+            (documentSnapshot) => {
+              const data =
+                documentSnapshot.data();
 
 
-                /* CLASS 6 TO 7 */
+              totalClassrooms +=
+                Number(
+                  data.classrooms
+                ) || 0;
 
-                else if (
-                  classNumber >= 6 &&
-                  classNumber <= 7
-                ) {
 
-                  target =
-                    rangeSummary.class6to7;
+              usableClassrooms +=
+                Number(
+                  data.usableClassrooms
+                ) || 0;
+            }
+          );
 
-                }
 
+          /* =====================================================
+             UPDATE STATES
+          ===================================================== */
 
-                /* CLASS 8 TO 9 */
+          setSummary({
+            students:
+              totalStudents,
 
-                else if (
-                  classNumber >= 8 &&
-                  classNumber <= 9
-                ) {
+            boys:
+              totalBoys,
 
-                  target =
-                    rangeSummary.class8to9;
+            girls:
+              totalGirls,
 
-                }
+            teachers:
+              totalTeachers,
 
+            maleTeachers,
 
-                /* CLASS 10 */
+            femaleTeachers,
 
-                else if (
-                  classNumber === 10
-                ) {
+            classrooms:
+              totalClassrooms,
 
-                  target =
-                    rangeSummary.class10;
+            usableClassrooms,
+          });
 
-                }
 
+          setClassSummary(
+            rangeSummary
+          );
+        }
 
-                if (target) {
+        catch (error) {
+          console.error(
+            "Home data loading error:",
+            error
+          );
+        }
 
-                  target.boys += boys;
-
-                  target.girls += girls;
-
-                  target.total +=
-                    boys + girls;
-
-                }
-
-              }
-            );
-
-          }
-        );
-
-
-        /* =====================================================
-           TEACHER DATA
-        ===================================================== */
-
-        teacherSnapshot.forEach(
-          (documentSnapshot) => {
-
-            const data =
-              documentSnapshot.data();
-
-
-            totalTeachers +=
-              Number(
-                data.totalTeachers
-              ) || 0;
-
-
-            maleTeachers +=
-              Number(
-                data.maleTeachers
-              ) || 0;
-
-
-            femaleTeachers +=
-              Number(
-                data.femaleTeachers
-              ) || 0;
-
-          }
-        );
-
-
-        /* =====================================================
-           INFRASTRUCTURE DATA
-        ===================================================== */
-
-        infrastructureSnapshot.forEach(
-          (documentSnapshot) => {
-
-            const data =
-              documentSnapshot.data();
-
-
-            totalClassrooms +=
-              Number(
-                data.classrooms
-              ) || 0;
-
-
-            usableClassrooms +=
-              Number(
-                data.usableClassrooms
-              ) || 0;
-
-          }
-        );
-
-
-        /* =====================================================
-           UPDATE STATES
-        ===================================================== */
-
-        setSummary({
-
-          students:
-            totalStudents,
-
-          boys:
-            totalBoys,
-
-          girls:
-            totalGirls,
-
-          teachers:
-            totalTeachers,
-
-          maleTeachers,
-
-          femaleTeachers,
-
-          classrooms:
-            totalClassrooms,
-
-          usableClassrooms,
-
-        });
-
-
-        setClassSummary(
-          rangeSummary
-        );
-
-      }
-
-      catch (error) {
-
-        console.error(
-          "Home data loading error:",
-          error
-        );
-
-      }
-
-      finally {
-
-        setLoading(false);
-
-      }
-
-    };
+        finally {
+          setLoading(false);
+        }
+      };
 
 
     loadHomeData();
-
   }, []);
 
 
@@ -458,7 +469,6 @@ export default function Home() {
   ========================================================= */
 
   return (
-
     <div className="home-page">
 
 
@@ -503,13 +513,11 @@ export default function Home() {
               to="/schools"
               className="home-primary-button"
             >
-
               <School size={17} />
 
               शाळा पहा
 
               <ArrowRight size={16} />
-
             </Link>
 
 
@@ -517,11 +525,9 @@ export default function Home() {
               to="/login"
               className="home-secondary-button"
             >
-
               <LogIn size={17} />
 
               सुरक्षित लॉगिन
-
             </Link>
 
           </div>
@@ -529,7 +535,6 @@ export default function Home() {
         </div>
 
       </section>
-
 
 
       {/* =====================================================
@@ -558,7 +563,7 @@ export default function Home() {
                 </span>
 
                 <strong>
-                  17
+                  {schools.length}
                 </strong>
 
                 <small>
@@ -569,7 +574,6 @@ export default function Home() {
               </div>
 
             </div>
-
 
 
             {/* TOTAL STUDENTS */}
@@ -600,7 +604,6 @@ export default function Home() {
               </div>
 
             </div>
-
 
 
             {/* TOTAL TEACHERS */}
@@ -634,7 +637,6 @@ export default function Home() {
             </div>
 
 
-
             {/* CLASSROOMS */}
 
             <div className="home-summary-card">
@@ -664,13 +666,11 @@ export default function Home() {
 
             </div>
 
-
           </div>
 
         </div>
 
       </section>
-
 
 
       {/* =====================================================
@@ -701,48 +701,38 @@ export default function Home() {
           </div>
 
 
-
           <div className="home-class-grid">
 
 
-            {/* CLASS 1-5 */}
+            {/* =================================================
+                CLASS 1 TO 5
+            ================================================= */}
 
             <article className="home-class-card">
 
               <div className="home-class-card-icon">
-
                 <BookOpen size={24} />
-
               </div>
-
 
               <div className="home-class-title">
-
                 इयत्ता 1 ते 5
-
               </div>
 
-
               <strong>
-
                 {loading
                   ? "..."
                   : classSummary
                       .class1to5
                       .total}
-
               </strong>
-
 
               <small>
                 एकूण विद्यार्थी
               </small>
 
-
               <div className="home-class-gender">
 
                 <span>
-
                   मुले
 
                   <b>
@@ -752,12 +742,10 @@ export default function Home() {
                         .boys
                     }
                   </b>
-
                 </span>
 
 
                 <span>
-
                   मुली
 
                   <b>
@@ -767,7 +755,6 @@ export default function Home() {
                         .girls
                     }
                   </b>
-
                 </span>
 
               </div>
@@ -775,70 +762,57 @@ export default function Home() {
             </article>
 
 
-
-            {/* CLASS 6-7 */}
+            {/* =================================================
+                CLASS 6 TO 8
+            ================================================= */}
 
             <article className="home-class-card">
 
               <div className="home-class-card-icon">
-
                 <BookOpen size={24} />
-
               </div>
-
 
               <div className="home-class-title">
-
-                इयत्ता 6 ते 7
-
+                इयत्ता 6 ते 8
               </div>
 
-
               <strong>
-
                 {loading
                   ? "..."
                   : classSummary
-                      .class6to7
+                      .class6to8
                       .total}
-
               </strong>
-
 
               <small>
                 एकूण विद्यार्थी
               </small>
 
-
               <div className="home-class-gender">
 
                 <span>
-
                   मुले
 
                   <b>
                     {
                       classSummary
-                        .class6to7
+                        .class6to8
                         .boys
                     }
                   </b>
-
                 </span>
 
 
                 <span>
-
                   मुली
 
                   <b>
                     {
                       classSummary
-                        .class6to7
+                        .class6to8
                         .girls
                     }
                   </b>
-
                 </span>
 
               </div>
@@ -846,70 +820,57 @@ export default function Home() {
             </article>
 
 
-
-            {/* CLASS 8-9 */}
+            {/* =================================================
+                CLASS 9 TO 10
+            ================================================= */}
 
             <article className="home-class-card">
 
               <div className="home-class-card-icon">
-
                 <BookOpen size={24} />
-
               </div>
-
 
               <div className="home-class-title">
-
-                इयत्ता 8 ते 9
-
+                इयत्ता 9 ते 10
               </div>
 
-
               <strong>
-
                 {loading
                   ? "..."
                   : classSummary
-                      .class8to9
+                      .class9to10
                       .total}
-
               </strong>
-
 
               <small>
                 एकूण विद्यार्थी
               </small>
 
-
               <div className="home-class-gender">
 
                 <span>
-
                   मुले
 
                   <b>
                     {
                       classSummary
-                        .class8to9
+                        .class9to10
                         .boys
                     }
                   </b>
-
                 </span>
 
 
                 <span>
-
                   मुली
 
                   <b>
                     {
                       classSummary
-                        .class8to9
+                        .class9to10
                         .girls
                     }
                   </b>
-
                 </span>
 
               </div>
@@ -917,83 +878,68 @@ export default function Home() {
             </article>
 
 
-
-            {/* CLASS 10 */}
+            {/* =================================================
+                CLASS 11 TO 12
+            ================================================= */}
 
             <article className="home-class-card">
 
               <div className="home-class-card-icon">
-
                 <GraduationCap size={24} />
-
               </div>
-
 
               <div className="home-class-title">
-
-                इयत्ता 10
-
+                इयत्ता 11 ते 12
               </div>
 
-
               <strong>
-
                 {loading
                   ? "..."
                   : classSummary
-                      .class10
+                      .class11to12
                       .total}
-
               </strong>
-
 
               <small>
                 एकूण विद्यार्थी
               </small>
 
-
               <div className="home-class-gender">
 
                 <span>
-
                   मुले
 
                   <b>
                     {
                       classSummary
-                        .class10
+                        .class11to12
                         .boys
                     }
                   </b>
-
                 </span>
 
 
                 <span>
-
                   मुली
 
                   <b>
                     {
                       classSummary
-                        .class10
+                        .class11to12
                         .girls
                     }
                   </b>
-
                 </span>
 
               </div>
 
             </article>
-
 
           </div>
 
         </div>
 
       </section>
-
 
 
       {/* =====================================================
@@ -1024,7 +970,6 @@ export default function Home() {
           </div>
 
 
-
           <div className="home-quick-grid">
 
 
@@ -1050,15 +995,12 @@ export default function Home() {
                 to="/schools"
                 className="home-quick-link"
               >
-
                 शाळा पहा
 
                 <span>→</span>
-
               </Link>
 
             </article>
-
 
 
             {/* CALENDAR */}
@@ -1083,15 +1025,12 @@ export default function Home() {
                 to="/calendar"
                 className="home-quick-link"
               >
-
                 कॅलेंडर पहा
 
                 <span>→</span>
-
               </Link>
 
             </article>
-
 
 
             {/* RESOURCES */}
@@ -1116,15 +1055,12 @@ export default function Home() {
                 to="/resources"
                 className="home-quick-link"
               >
-
                 संसाधने पहा
 
                 <span>→</span>
-
               </Link>
 
             </article>
-
 
 
             {/* DOWNLOADS */}
@@ -1149,22 +1085,18 @@ export default function Home() {
                 to="/downloads"
                 className="home-quick-link"
               >
-
                 Downloads
 
                 <span>→</span>
-
               </Link>
 
             </article>
-
 
           </div>
 
         </div>
 
       </section>
-
 
 
       {/* =====================================================
@@ -1211,22 +1143,18 @@ export default function Home() {
                 to="/about"
                 className="home-information-button"
               >
-
                 केंद्र परिचय
 
                 <ArrowRight size={16} />
-
               </Link>
 
             </div>
-
 
           </div>
 
         </div>
 
       </section>
-
 
 
       {/* =====================================================
@@ -1252,7 +1180,5 @@ export default function Home() {
 
 
     </div>
-
   );
-
 }

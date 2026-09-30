@@ -1,12 +1,5 @@
-import {
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-
-import type {
-  FormEvent,
-} from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { FormEvent } from "react";
 
 import {
   addDoc,
@@ -22,7 +15,6 @@ import {
 
 import {
   ArrowLeft,
-  CalendarDays,
   Edit3,
   GraduationCap,
   Plus,
@@ -35,13 +27,12 @@ import {
   X,
 } from "lucide-react";
 
-import {
-  Link,
-  useNavigate,
-} from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { db } from "../firebase/firebase";
 import { getSession } from "../utils/session";
+
+import StudentExcelImport from "../components/StudentExcelImport";
 
 
 /* =========================================================
@@ -71,7 +62,6 @@ interface Student {
 
   createdBy: string;
 }
-
 
 interface StudentForm {
   name: string;
@@ -127,40 +117,25 @@ const classOptions = [
    AGE CALCULATION
 ========================================================= */
 
-function calculateAge(
-  dob: string
-): number {
-
+function calculateAge(dob: string): number {
   if (!dob) {
     return 0;
   }
 
+  const birthDate = new Date(dob);
+  const today = new Date();
 
-  const birthDate =
-    new Date(dob);
-
-  const today =
-    new Date();
-
-
-  if (
-    Number.isNaN(
-      birthDate.getTime()
-    )
-  ) {
+  if (Number.isNaN(birthDate.getTime())) {
     return 0;
   }
-
 
   let age =
     today.getFullYear() -
     birthDate.getFullYear();
 
-
   const monthDifference =
     today.getMonth() -
     birthDate.getMonth();
-
 
   if (
     monthDifference < 0 ||
@@ -173,11 +148,7 @@ function calculateAge(
     age--;
   }
 
-
-  return Math.max(
-    age,
-    0
-  );
+  return Math.max(age, 0);
 }
 
 
@@ -186,100 +157,53 @@ function calculateAge(
 ========================================================= */
 
 export default function Students() {
+  const navigate = useNavigate();
+  const session = getSession();
 
-  const navigate =
-    useNavigate();
+  const [students, setStudents] =
+    useState<Student[]>([]);
 
+  const [form, setForm] =
+    useState<StudentForm>(initialForm);
 
-  const session =
-    getSession();
+  const [loading, setLoading] =
+    useState(true);
 
+  const [saving, setSaving] =
+    useState(false);
 
-  /* =======================================================
-     STATE
-  ======================================================= */
+  const [search, setSearch] =
+    useState("");
 
-  const [
-    students,
-    setStudents,
-  ] = useState<Student[]>([]);
+  const [showForm, setShowForm] =
+    useState(false);
 
+  const [editingId, setEditingId] =
+    useState<string | null>(null);
 
-  const [
-    form,
-    setForm,
-  ] = useState<StudentForm>(
-    initialForm
-  );
+  const [message, setMessage] =
+    useState("");
 
-
-  const [
-    loading,
-    setLoading,
-  ] = useState(true);
-
-
-  const [
-    saving,
-    setSaving,
-  ] = useState(false);
-
-
-  const [
-    search,
-    setSearch,
-  ] = useState("");
-
-
-  const [
-    showForm,
-    setShowForm,
-  ] = useState(false);
-
-
-  const [
-    editingId,
-    setEditingId,
-  ] = useState<string | null>(
-    null
-  );
-
-
-  const [
-    message,
-    setMessage,
-  ] = useState("");
-
-
-  const [
-    messageType,
-    setMessageType,
-  ] = useState<
-    "success" | "error"
-  >("success");
+  const [messageType, setMessageType] =
+    useState<"success" | "error">(
+      "success"
+    );
 
 
   /* =======================================================
-     PRINCIPAL AUTH CHECK
+     AUTH
   ======================================================= */
 
   useEffect(() => {
-
     if (
       !session ||
       session.role !== "principal" ||
       !session.schoolId
     ) {
-
-      navigate(
-        "/login",
-        {
-          replace: true,
-        }
-      );
-
+      navigate("/login", {
+        replace: true,
+      });
     }
-
   }, [
     navigate,
     session?.id,
@@ -292,253 +216,149 @@ export default function Students() {
      LOAD STUDENTS
   ======================================================= */
 
-  const loadStudents =
-    async () => {
+  const loadStudents = async () => {
+    if (
+      !session ||
+      session.role !== "principal" ||
+      !session.schoolId
+    ) {
+      return;
+    }
 
-      if (
-        !session ||
-        session.role !== "principal" ||
-        !session.schoolId
-      ) {
-        return;
-      }
+    try {
+      setLoading(true);
 
+      const studentQuery = query(
+        collection(db, "students"),
+        where(
+          "schoolId",
+          "==",
+          String(session.schoolId)
+        )
+      );
 
-      try {
+      const snapshot =
+        await getDocs(studentQuery);
 
-        setLoading(true);
+      const records: Student[] =
+        snapshot.docs.map(
+          (studentDocument) => {
+            const data =
+              studentDocument.data();
 
-        setMessage("");
+            return {
+              id: studentDocument.id,
 
+              schoolId: String(
+                data.schoolId || ""
+              ),
 
-        const studentQuery =
-          query(
+              schoolName: String(
+                data.schoolName || ""
+              ),
 
-            collection(
-              db,
-              "students"
-            ),
+              udise: String(
+                data.udise || ""
+              ),
 
-            where(
-              "schoolId",
-              "==",
-              String(
-                session.schoolId
-              )
-            )
+              name: String(
+                data.name || ""
+              ),
 
-          );
+              dob: String(
+                data.dob || ""
+              ),
 
+              age: Number(
+                data.age || 0
+              ),
 
-        const snapshot =
-          await getDocs(
-            studentQuery
-          );
+              gender: String(
+                data.gender || ""
+              ),
 
+              className: String(
+                data.className || ""
+              ),
 
-        const records: Student[] =
-          snapshot.docs.map(
-            (studentDocument) => {
+              rollNumber: String(
+                data.rollNumber || ""
+              ),
 
-              const data =
-                studentDocument.data();
+              admissionNumber: String(
+                data.admissionNumber || ""
+              ),
 
+              parentName: String(
+                data.parentName || ""
+              ),
 
-              return {
+              mobile: String(
+                data.mobile || ""
+              ),
 
-                id:
-                  studentDocument.id,
+              address: String(
+                data.address || ""
+              ),
 
-                schoolId:
-                  String(
-                    data.schoolId || ""
-                  ),
-
-                schoolName:
-                  String(
-                    data.schoolName || ""
-                  ),
-
-                udise:
-                  String(
-                    data.udise || ""
-                  ),
-
-                name:
-                  String(
-                    data.name || ""
-                  ),
-
-                dob:
-                  String(
-                    data.dob || ""
-                  ),
-
-                age:
-                  Number(
-                    data.age || 0
-                  ),
-
-                gender:
-                  String(
-                    data.gender || ""
-                  ),
-
-                className:
-                  String(
-                    data.className || ""
-                  ),
-
-                rollNumber:
-                  String(
-                    data.rollNumber || ""
-                  ),
-
-                admissionNumber:
-                  String(
-                    data.admissionNumber ||
-                    ""
-                  ),
-
-                parentName:
-                  String(
-                    data.parentName || ""
-                  ),
-
-                mobile:
-                  String(
-                    data.mobile || ""
-                  ),
-
-                address:
-                  String(
-                    data.address || ""
-                  ),
-
-                createdBy:
-                  String(
-                    data.createdBy || ""
-                  ),
-
-              };
-
-            }
-          );
-
-
-        /*
-          Sort by Class and
-          Roll Number
-        */
-
-        records.sort(
-          (a, b) => {
-
-            const classA =
-              Number(
-                a.className
-              ) || 0;
-
-            const classB =
-              Number(
-                b.className
-              ) || 0;
-
-
-            if (
-              classA !== classB
-            ) {
-
-              return (
-                classA -
-                classB
-              );
-
-            }
-
-
-            const rollA =
-              Number(
-                a.rollNumber
-              ) || 0;
-
-            const rollB =
-              Number(
-                b.rollNumber
-              ) || 0;
-
-
-            if (
-              rollA !== rollB
-            ) {
-
-              return (
-                rollA -
-                rollB
-              );
-
-            }
-
-
-            return (
-              a.name.localeCompare(
-                b.name
-              )
-            );
-
+              createdBy: String(
+                data.createdBy || ""
+              ),
+            };
           }
         );
 
+      records.sort((a, b) => {
+        const classA =
+          Number(a.className) || 0;
 
-        setStudents(
-          records
+        const classB =
+          Number(b.className) || 0;
+
+        if (classA !== classB) {
+          return classA - classB;
+        }
+
+        const rollA =
+          Number(a.rollNumber) || 0;
+
+        const rollB =
+          Number(b.rollNumber) || 0;
+
+        if (rollA !== rollB) {
+          return rollA - rollB;
+        }
+
+        return a.name.localeCompare(
+          b.name
         );
+      });
 
-      }
+      setStudents(records);
+    } catch (error) {
+      console.error(
+        "Student loading error:",
+        error
+      );
 
-      catch (error) {
+      setMessageType("error");
 
-        console.error(
-          "Student loading error:",
-          error
-        );
+      setMessage(
+        "Student records load nahi ho sake."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
-
-        setMessageType(
-          "error"
-        );
-
-        setMessage(
-          "Student records load nahi ho sake."
-        );
-
-      }
-
-      finally {
-
-        setLoading(false);
-
-      }
-
-    };
-
-
-  /* =======================================================
-     INITIAL LOAD
-  ======================================================= */
 
   useEffect(() => {
-
     if (
-      session?.role ===
-        "principal" &&
+      session?.role === "principal" &&
       session?.schoolId
     ) {
-
       loadStudents();
-
     }
-
   }, [
     session?.id,
     session?.role,
@@ -547,154 +367,78 @@ export default function Students() {
 
 
   /* =======================================================
-     INPUT CHANGE
+     FORM
   ======================================================= */
 
   const handleChange = (
     field: keyof StudentForm,
     value: string
   ) => {
-
-    setForm(
-      (previous) => ({
-        ...previous,
-        [field]: value,
-      })
-    );
-
+    setForm((previous) => ({
+      ...previous,
+      [field]: value,
+    }));
   };
 
-
-  /* =======================================================
-     RESET FORM
-  ======================================================= */
 
   const resetForm = () => {
-
-    setForm(
-      initialForm
-    );
-
-    setEditingId(
-      null
-    );
-
-    setShowForm(
-      false
-    );
-
+    setForm(initialForm);
+    setEditingId(null);
+    setShowForm(false);
   };
 
 
-  /* =======================================================
-     ADD STUDENT
-  ======================================================= */
+  const openAddStudent = () => {
+    setMessage("");
+    setEditingId(null);
+    setForm(initialForm);
+    setShowForm(true);
 
-  const openAddStudent =
-    () => {
+    window.scrollTo({
+      top: 250,
+      behavior: "smooth",
+    });
+  };
 
-      setMessage("");
-
-      setEditingId(
-        null
-      );
-
-      setForm(
-        initialForm
-      );
-
-      setShowForm(
-        true
-      );
-
-    };
-
-
-  /* =======================================================
-     EDIT STUDENT
-  ======================================================= */
 
   const handleEdit = (
     student: Student
   ) => {
-
-    /*
-      Extra safety check:
-      Principal should edit
-      only own school student.
-    */
-
     if (
-      String(
-        student.schoolId
-      ) !==
-      String(
-        session?.schoolId
-      )
+      String(student.schoolId) !==
+      String(session?.schoolId)
     ) {
-
-      setMessageType(
-        "error"
-      );
+      setMessageType("error");
 
       setMessage(
         "You cannot edit another school's student."
       );
 
       return;
-
     }
 
-
-    setEditingId(
-      student.id
-    );
-
+    setEditingId(student.id);
 
     setForm({
-
-      name:
-        student.name,
-
-      dob:
-        student.dob,
-
-      gender:
-        student.gender,
-
-      className:
-        student.className,
-
-      rollNumber:
-        student.rollNumber,
-
+      name: student.name,
+      dob: student.dob,
+      gender: student.gender,
+      className: student.className,
+      rollNumber: student.rollNumber,
       admissionNumber:
         student.admissionNumber,
-
-      parentName:
-        student.parentName,
-
-      mobile:
-        student.mobile,
-
-      address:
-        student.address,
-
+      parentName: student.parentName,
+      mobile: student.mobile,
+      address: student.address,
     });
-
 
     setMessage("");
-
-    setShowForm(
-      true
-    );
-
+    setShowForm(true);
 
     window.scrollTo({
-      top: 0,
+      top: 250,
       behavior: "smooth",
     });
-
   };
 
 
@@ -704,67 +448,33 @@ export default function Students() {
 
   const validateForm =
     (): string | null => {
-
       if (
-        form.name.trim().length <
-        2
+        form.name.trim().length < 2
       ) {
-
-        return (
-          "Student name enter karo."
-        );
-
+        return "Student name enter karo.";
       }
-
 
       if (!form.dob) {
-
-        return (
-          "Date of Birth select karo."
-        );
-
+        return "Date of Birth select karo.";
       }
 
-
       const selectedDOB =
-        new Date(
-          form.dob
-        );
-
-
-      const today =
-        new Date();
-
+        new Date(form.dob);
 
       if (
         selectedDOB >
-        today
+        new Date()
       ) {
-
-        return (
-          "Date of Birth future date nahi ho sakti."
-        );
-
+        return "Date of Birth future date nahi ho sakti.";
       }
-
 
       if (!form.gender) {
-
-        return (
-          "Gender select karo."
-        );
-
+        return "Gender select karo.";
       }
-
 
       if (!form.className) {
-
-        return (
-          "Class select karo."
-        );
-
+        return "Class select karo.";
       }
-
 
       if (
         form.mobile.trim() &&
@@ -772,16 +482,10 @@ export default function Students() {
           form.mobile.trim()
         )
       ) {
-
-        return (
-          "Valid 10 digit mobile number enter karo."
-        );
-
+        return "Valid 10 digit mobile number enter karo.";
       }
 
-
       return null;
-
     };
 
 
@@ -789,448 +493,295 @@ export default function Students() {
      SAVE STUDENT
   ======================================================= */
 
-  const handleSubmit =
-    async (
-      event:
-        FormEvent<HTMLFormElement>
-    ) => {
+  const handleSubmit = async (
+    event: FormEvent<HTMLFormElement>
+  ) => {
+    event.preventDefault();
 
-      event.preventDefault();
+    if (
+      !session ||
+      session.role !== "principal" ||
+      !session.schoolId
+    ) {
+      setMessageType("error");
 
+      setMessage(
+        "Principal session not found."
+      );
 
-      if (
-        !session ||
-        session.role !==
-          "principal" ||
-        !session.schoolId
-      ) {
+      return;
+    }
 
-        setMessageType(
-          "error"
-        );
+    const validationError =
+      validateForm();
 
-        setMessage(
-          "Principal session not found."
-        );
+    if (validationError) {
+      setMessageType("error");
+      setMessage(validationError);
+      return;
+    }
 
-        return;
+    try {
+      setSaving(true);
+      setMessage("");
 
-      }
+      const age =
+        calculateAge(form.dob);
 
+      const studentData = {
+        schoolId: String(
+          session.schoolId
+        ),
 
-      const validationError =
-        validateForm();
+        schoolName:
+          session.schoolName || "",
 
+        udise:
+          session.udise || "",
 
-      if (
-        validationError
-      ) {
+        name:
+          form.name.trim(),
 
-        setMessageType(
-          "error"
-        );
+        dob:
+          form.dob,
 
-        setMessage(
-          validationError
-        );
+        age,
 
-        return;
+        gender:
+          form.gender,
 
-      }
+        className:
+          form.className,
 
+        rollNumber:
+          form.rollNumber.trim(),
 
-      try {
+        admissionNumber:
+          form.admissionNumber.trim(),
 
-        setSaving(true);
+        parentName:
+          form.parentName.trim(),
 
-        setMessage("");
+        mobile:
+          form.mobile.trim(),
 
+        address:
+          form.address.trim(),
 
-        const age =
-          calculateAge(
-            form.dob
+        updatedBy:
+          session.id,
+
+        updatedByRole:
+          "principal",
+
+        updatedAt:
+          serverTimestamp(),
+      };
+
+      if (editingId) {
+        const currentStudent =
+          students.find(
+            (student) =>
+              student.id === editingId
           );
 
-
-        const studentData = {
-
-          schoolId:
-            String(
-              session.schoolId
-            ),
-
-          schoolName:
-            session.schoolName ||
-            "",
-
-          udise:
-            session.udise ||
-            "",
-
-
-          name:
-            form.name.trim(),
-
-          dob:
-            form.dob,
-
-          age,
-
-          gender:
-            form.gender,
-
-          className:
-            form.className,
-
-          rollNumber:
-            form.rollNumber.trim(),
-
-          admissionNumber:
-            form.admissionNumber.trim(),
-
-          parentName:
-            form.parentName.trim(),
-
-          mobile:
-            form.mobile.trim(),
-
-          address:
-            form.address.trim(),
-
-          updatedAt:
-            serverTimestamp(),
-
-        };
-
-
-        /* ===============================================
-           UPDATE
-        =============================================== */
-
         if (
-          editingId
-        ) {
-
-          /*
-            Make sure record being edited
-            belongs to current Principal's
-            school.
-          */
-
-          const currentStudent =
-            students.find(
-              (student) =>
-                student.id ===
-                editingId
-            );
-
-
-          if (
-            !currentStudent ||
-            String(
-              currentStudent.schoolId
-            ) !==
+          !currentStudent ||
+          String(
+            currentStudent.schoolId
+          ) !==
             String(
               session.schoolId
             )
-          ) {
-
-            throw new Error(
-              "Unauthorized student update."
-            );
-
-          }
-
-
-          await updateDoc(
-
-            doc(
-              db,
-              "students",
-              editingId
-            ),
-
-            studentData
-
+        ) {
+          throw new Error(
+            "Unauthorized student update."
           );
-
-
-          setMessageType(
-            "success"
-          );
-
-          setMessage(
-            "Student information successfully updated."
-          );
-
         }
 
-        /* ===============================================
-           CREATE
-        =============================================== */
-
-        else {
-
-          await addDoc(
-
-            collection(
-              db,
-              "students"
-            ),
-
-            {
-              ...studentData,
-
-              createdBy:
-                session.id,
-
-              createdAt:
-                serverTimestamp(),
-            }
-
-          );
-
-
-          setMessageType(
-            "success"
-          );
-
-          setMessage(
-            "Student successfully added."
-          );
-
-        }
-
-
-        /*
-          Close form
-        */
-
-        setForm(
-          initialForm
-        );
-
-        setEditingId(
-          null
-        );
-
-        setShowForm(
-          false
-        );
-
-
-        /*
-          Refresh records
-        */
-
-        await loadStudents();
-
-      }
-
-      catch (error) {
-
-        console.error(
-          "Student save error:",
-          error
-        );
-
-
-        setMessageType(
-          "error"
-        );
-
-        setMessage(
-          "Student information save nahi ho saki."
-        );
-
-      }
-
-      finally {
-
-        setSaving(false);
-
-      }
-
-    };
-
-
-  /* =======================================================
-     DELETE STUDENT
-  ======================================================= */
-
-  const handleDelete =
-    async (
-      student: Student
-    ) => {
-
-      if (
-        !session ||
-        session.role !==
-          "principal" ||
-        !session.schoolId
-      ) {
-
-        return;
-
-      }
-
-
-      /*
-        Principal must not delete
-        another school's record.
-      */
-
-      if (
-        String(
-          student.schoolId
-        ) !==
-        String(
-          session.schoolId
-        )
-      ) {
-
-        setMessageType(
-          "error"
-        );
-
-        setMessage(
-          "You cannot delete another school's student."
-        );
-
-        return;
-
-      }
-
-
-      const confirmed =
-        window.confirm(
-
-          `Delete student?\n\nName: ${student.name}\nClass: ${student.className}\n\nThis action cannot be undone.`
-
-        );
-
-
-      if (!confirmed) {
-        return;
-      }
-
-
-      try {
-
-        await deleteDoc(
-
+        await updateDoc(
           doc(
             db,
             "students",
-            student.id
-          )
-
+            editingId
+          ),
+          studentData
         );
 
-
-        setStudents(
-          (previous) =>
-
-            previous.filter(
-              (item) =>
-                item.id !==
-                student.id
-            )
-        );
-
-
-        setMessageType(
-          "success"
-        );
+        setMessageType("success");
 
         setMessage(
-          `${student.name} ka student record delete ho gaya.`
+          "Student information successfully updated."
         );
+      } else {
+        await addDoc(
+          collection(
+            db,
+            "students"
+          ),
+          {
+            ...studentData,
 
-      }
+            createdBy:
+              session.id,
 
-      catch (error) {
+            createdByRole:
+              "principal",
 
-        console.error(
-          "Student delete error:",
-          error
-        );
-
-
-        setMessageType(
-          "error"
-        );
-
-        setMessage(
-          "Student record delete nahi ho saka."
-        );
-
-      }
-
-    };
-
-
-  /* =======================================================
-     SEARCH FILTER
-  ======================================================= */
-
-  const filteredStudents =
-    useMemo(
-      () => {
-
-        const value =
-          search
-            .trim()
-            .toLowerCase();
-
-
-        if (!value) {
-
-          return students;
-
-        }
-
-
-        return students.filter(
-          (student) => {
-
-            return (
-
-              student.name
-                .toLowerCase()
-                .includes(value) ||
-
-              student.className
-                .toLowerCase()
-                .includes(value) ||
-
-              student.rollNumber
-                .toLowerCase()
-                .includes(value) ||
-
-              student.admissionNumber
-                .toLowerCase()
-                .includes(value) ||
-
-              student.parentName
-                .toLowerCase()
-                .includes(value) ||
-
-              student.mobile
-                .toLowerCase()
-                .includes(value)
-
-            );
-
+            createdAt:
+              serverTimestamp(),
           }
         );
 
-      },
-      [
-        students,
-        search,
-      ]
-    );
+        setMessageType("success");
+
+        setMessage(
+          "Student successfully added."
+        );
+      }
+
+      setForm(initialForm);
+      setEditingId(null);
+      setShowForm(false);
+
+      await loadStudents();
+    } catch (error) {
+      console.error(
+        "Student save error:",
+        error
+      );
+
+      setMessageType("error");
+
+      setMessage(
+        "Student information save nahi ho saki."
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+
+  /* =======================================================
+     DELETE
+  ======================================================= */
+
+  const handleDelete = async (
+    student: Student
+  ) => {
+    if (
+      !session ||
+      session.role !== "principal" ||
+      !session.schoolId
+    ) {
+      return;
+    }
+
+    if (
+      String(student.schoolId) !==
+      String(session.schoolId)
+    ) {
+      setMessageType("error");
+
+      setMessage(
+        "You cannot delete another school's student."
+      );
+
+      return;
+    }
+
+    const confirmed =
+      window.confirm(
+        `Delete student?\n\nName: ${student.name}\nClass: ${student.className}\n\nThis action cannot be undone.`
+      );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await deleteDoc(
+        doc(
+          db,
+          "students",
+          student.id
+        )
+      );
+
+      setStudents(
+        (previous) =>
+          previous.filter(
+            (item) =>
+              item.id !==
+              student.id
+          )
+      );
+
+      setMessageType("success");
+
+      setMessage(
+        `${student.name} ka student record delete ho gaya.`
+      );
+    } catch (error) {
+      console.error(
+        "Student delete error:",
+        error
+      );
+
+      setMessageType("error");
+
+      setMessage(
+        "Student record delete nahi ho saka."
+      );
+    }
+  };
+
+
+  /* =======================================================
+     FILTER
+  ======================================================= */
+
+  const filteredStudents =
+    useMemo(() => {
+      const value =
+        search
+          .trim()
+          .toLowerCase();
+
+      if (!value) {
+        return students;
+      }
+
+      return students.filter(
+        (student) =>
+          student.name
+            .toLowerCase()
+            .includes(value) ||
+
+          student.className
+            .toLowerCase()
+            .includes(value) ||
+
+          student.rollNumber
+            .toLowerCase()
+            .includes(value) ||
+
+          student.admissionNumber
+            .toLowerCase()
+            .includes(value) ||
+
+          student.parentName
+            .toLowerCase()
+            .includes(value) ||
+
+          student.mobile
+            .toLowerCase()
+            .includes(value)
+      );
+    }, [
+      students,
+      search,
+    ]);
 
 
   /* =======================================================
@@ -1240,11 +791,9 @@ export default function Students() {
   const totalStudents =
     students.length;
 
-
   const totalBoys =
     students.filter(
       (student) => {
-
         const gender =
           student.gender
             .trim()
@@ -1255,15 +804,12 @@ export default function Students() {
           gender === "boy" ||
           gender === "boys"
         );
-
       }
     ).length;
-
 
   const totalGirls =
     students.filter(
       (student) => {
-
         const gender =
           student.gender
             .trim()
@@ -1274,133 +820,74 @@ export default function Students() {
           gender === "girl" ||
           gender === "girls"
         );
-
       }
     ).length;
 
 
-  /* =======================================================
-     SECURITY
-  ======================================================= */
-
   if (
     !session ||
-    session.role !==
-      "principal" ||
+    session.role !== "principal" ||
     !session.schoolId
   ) {
-
     return null;
-
   }
 
 
-  /* =======================================================
-     UI
-  ======================================================= */
-
   return (
-
     <div className="private-students-page">
 
-
-      {/* ===================================================
-          HEADER
-      =================================================== */}
+      {/* HEADER */}
 
       <header className="private-students-header">
-
-
         <div>
-
           <Link
             to="/principal"
             className="private-back-button"
           >
-
-            <ArrowLeft
-              size={17}
-            />
-
+            <ArrowLeft size={17} />
             Dashboard
-
           </Link>
-
 
           <span>
             PRINCIPAL PANEL
           </span>
 
-
           <h1>
             Student Records
           </h1>
 
-
           <p>
-
             {session.schoolName ||
               "Assigned School"}
-
           </p>
 
-
           {session.udise && (
-
             <small>
-              UDISE:{" "}
-              {session.udise}
+              UDISE: {session.udise}
             </small>
-
           )}
-
         </div>
-
-
 
         <button
           type="button"
           className="private-add-button"
-          onClick={
-            openAddStudent
-          }
+          onClick={openAddStudent}
         >
-
-          <Plus
-            size={18}
-          />
-
+          <Plus size={18} />
           Add Student
-
         </button>
-
-
       </header>
 
 
-
-      {/* ===================================================
-          CONTENT
-      =================================================== */}
-
       <main className="private-students-content">
 
-
-        {/* =================================================
-            SUMMARY
-        ================================================= */}
+        {/* SUMMARY */}
 
         <section className="private-student-summary">
 
-
           <article>
-
             <div>
-
-              <Users
-                size={22}
-              />
-
+              <Users size={22} />
             </div>
 
             <span>
@@ -1410,19 +897,12 @@ export default function Students() {
             <strong>
               {totalStudents}
             </strong>
-
           </article>
 
 
-
           <article>
-
             <div>
-
-              <UserRound
-                size={22}
-              />
-
+              <UserRound size={22} />
             </div>
 
             <span>
@@ -1432,19 +912,12 @@ export default function Students() {
             <strong>
               {totalBoys}
             </strong>
-
           </article>
 
 
-
           <article>
-
             <div>
-
-              <UserRound
-                size={22}
-              />
-
+              <UserRound size={22} />
             </div>
 
             <span>
@@ -1454,19 +927,14 @@ export default function Students() {
             <strong>
               {totalGirls}
             </strong>
-
           </article>
 
 
-
           <article>
-
             <div>
-
               <GraduationCap
                 size={22}
               />
-
             </div>
 
             <span>
@@ -1478,101 +946,90 @@ export default function Students() {
                 fontSize: "14px",
               }}
             >
-
               {session.schoolId}
-
             </strong>
-
           </article>
-
 
         </section>
 
 
+        {/* ===============================================
+            EXCEL IMPORT
+        =============================================== */}
 
-        {/* =================================================
-            MESSAGE
-        ================================================= */}
+        <StudentExcelImport
+          schoolId={
+            String(
+              session.schoolId
+            )
+          }
+          schoolName={
+            session.schoolName ||
+            "Assigned School"
+          }
+          udise={
+            session.udise || ""
+          }
+          userId={
+            session.id
+          }
+          userRole="principal"
+          onImportComplete={
+            loadStudents
+          }
+        />
+
+
+        {/* MESSAGE */}
 
         {message && (
-
           <div
             className={
               messageType ===
               "success"
-
                 ? "private-message success"
-
                 : "private-message error"
             }
           >
-
             {message}
-
           </div>
-
         )}
 
 
-
-        {/* =================================================
-            ADD / EDIT FORM
-        ================================================= */}
+        {/* ADD / EDIT FORM */}
 
         {showForm && (
-
           <section className="private-student-form-card">
 
-
             <div className="private-form-heading">
-
               <div>
-
                 <span>
                   STUDENT INFORMATION
                 </span>
 
                 <h2>
-
                   {editingId
                     ? "Edit Student"
                     : "Add New Student"}
-
                 </h2>
-
               </div>
-
 
               <button
                 type="button"
-                onClick={
-                  resetForm
-                }
+                onClick={resetForm}
                 title="Close"
               >
-
-                <X
-                  size={20}
-                />
-
+                <X size={20} />
               </button>
-
             </div>
-
 
 
             <form
               className="private-student-form"
-              onSubmit={
-                handleSubmit
-              }
+              onSubmit={handleSubmit}
             >
 
-
-              {/* STUDENT NAME */}
-
               <div className="private-full-field">
-
                 <label>
                   Student Full Name *
                 </label>
@@ -1580,9 +1037,7 @@ export default function Students() {
                 <input
                   type="text"
                   placeholder="Enter student full name"
-                  value={
-                    form.name
-                  }
+                  value={form.name}
                   onChange={(event) =>
                     handleChange(
                       "name",
@@ -1591,24 +1046,17 @@ export default function Students() {
                   }
                   required
                 />
-
               </div>
 
 
-
-              {/* DOB */}
-
               <div>
-
                 <label>
                   Date of Birth *
                 </label>
 
                 <input
                   type="date"
-                  value={
-                    form.dob
-                  }
+                  value={form.dob}
                   max={
                     new Date()
                       .toISOString()
@@ -1622,15 +1070,10 @@ export default function Students() {
                   }
                   required
                 />
-
               </div>
 
 
-
-              {/* AGE */}
-
               <div>
-
                 <label>
                   Age
                 </label>
@@ -1647,23 +1090,16 @@ export default function Students() {
                   placeholder="Auto calculated"
                   disabled
                 />
-
               </div>
 
 
-
-              {/* GENDER */}
-
               <div>
-
                 <label>
                   Gender *
                 </label>
 
                 <select
-                  value={
-                    form.gender
-                  }
+                  value={form.gender}
                   onChange={(event) =>
                     handleChange(
                       "gender",
@@ -1672,7 +1108,6 @@ export default function Students() {
                   }
                   required
                 >
-
                   <option value="">
                     Select Gender
                   </option>
@@ -1688,17 +1123,11 @@ export default function Students() {
                   <option value="Other">
                     Other
                   </option>
-
                 </select>
-
               </div>
 
 
-
-              {/* CLASS */}
-
               <div>
-
                 <label>
                   Class *
                 </label>
@@ -1715,15 +1144,12 @@ export default function Students() {
                   }
                   required
                 >
-
                   <option value="">
                     Select Class
                   </option>
 
-
                   {classOptions.map(
                     (className) => (
-
                       <option
                         key={
                           className
@@ -1732,25 +1158,16 @@ export default function Students() {
                           className
                         }
                       >
-
                         Class{" "}
                         {className}
-
                       </option>
-
                     )
                   )}
-
                 </select>
-
               </div>
 
 
-
-              {/* ROLL */}
-
               <div>
-
                 <label>
                   Roll Number
                 </label>
@@ -1768,15 +1185,10 @@ export default function Students() {
                     )
                   }
                 />
-
               </div>
 
 
-
-              {/* ADMISSION */}
-
               <div>
-
                 <label>
                   Admission Number
                 </label>
@@ -1794,15 +1206,10 @@ export default function Students() {
                     )
                   }
                 />
-
               </div>
 
 
-
-              {/* PARENT */}
-
               <div>
-
                 <label>
                   Parent / Guardian Name
                 </label>
@@ -1820,15 +1227,10 @@ export default function Students() {
                     )
                   }
                 />
-
               </div>
 
 
-
-              {/* MOBILE */}
-
               <div>
-
                 <label>
                   Parent Mobile Number
                 </label>
@@ -1837,39 +1239,26 @@ export default function Students() {
                   type="tel"
                   maxLength={10}
                   placeholder="10 digit mobile number"
-                  value={
-                    form.mobile
-                  }
+                  value={form.mobile}
                   onChange={(event) => {
-
                     const value =
                       event.target.value
                         .replace(
                           /\D/g,
                           ""
                         )
-                        .slice(
-                          0,
-                          10
-                        );
-
+                        .slice(0, 10);
 
                     handleChange(
                       "mobile",
                       value
                     );
-
                   }}
                 />
-
               </div>
 
 
-
-              {/* ADDRESS */}
-
               <div className="private-full-field">
-
                 <label>
                   Address
                 </label>
@@ -1887,139 +1276,147 @@ export default function Students() {
                     )
                   }
                 />
-
               </div>
 
 
-
-              {/* ACTIONS */}
-
-              <div className="private-form-actions">
-
-
-                <button
-                  type="button"
-                  className="private-cancel-button"
-                  onClick={
-                    resetForm
-                  }
-                  disabled={
-                    saving
-                  }
+              <div className="private-full-field">
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "10px",
+                    flexWrap: "wrap",
+                  }}
                 >
+                  <button
+                    type="submit"
+                    className="private-save-button"
+                    disabled={saving}
+                  >
+                    <Save size={17} />
 
-                  <X
-                    size={16}
-                  />
+                    {saving
+                      ? "Saving..."
+                      : editingId
+                        ? "Update Student"
+                        : "Save Student"}
+                  </button>
 
-                  Cancel
-
-                </button>
-
-
-
-                <button
-                  type="submit"
-                  className="private-save-button"
-                  disabled={
-                    saving
-                  }
-                >
-
-                  <Save
-                    size={16}
-                  />
-
-
-                  {saving
-
-                    ? "Saving..."
-
-                    : editingId
-
-                    ? "Update Student"
-
-                    : "Save Student"}
-
-                </button>
-
-
+                  <button
+                    type="button"
+                    className="private-cancel-button"
+                    onClick={
+                      resetForm
+                    }
+                    disabled={saving}
+                  >
+                    <X size={17} />
+                    Cancel
+                  </button>
+                </div>
               </div>
-
 
             </form>
-
-
           </section>
-
         )}
 
 
+        {/* SEARCH */}
 
-        {/* =================================================
-            SEARCH
-        ================================================= */}
-
-        <section className="private-student-toolbar">
-
-
-          <div className="private-search">
-
-            <Search
-              size={18}
-            />
-
-            <input
-              type="search"
-              placeholder="Search by name, class, roll no., admission no., parent or mobile..."
-              value={
-                search
-              }
-              onChange={(event) =>
-                setSearch(
-                  event.target.value
-                )
-              }
-            />
-
-          </div>
-
-
-
-          <button
-            type="button"
-            onClick={
-              loadStudents
-            }
-            disabled={
-              loading
-            }
+        <section
+          style={{
+            marginTop: "24px",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              gap: "10px",
+              alignItems: "center",
+              flexWrap: "wrap",
+            }}
           >
+            <div
+              style={{
+                position: "relative",
+                flex: "1 1 350px",
+                maxWidth: "520px",
+              }}
+            >
+              <Search
+                size={18}
+                style={{
+                  position:
+                    "absolute",
+                  left: "14px",
+                  top: "50%",
+                  transform:
+                    "translateY(-50%)",
+                  color: "#78909c",
+                }}
+              />
 
-            <RefreshCw
-              size={17}
-            />
+              <input
+                type="search"
+                placeholder="Search by name, class, roll no., admission no., parent or mobile..."
+                value={search}
+                onChange={(event) =>
+                  setSearch(
+                    event.target.value
+                  )
+                }
+                style={{
+                  width: "100%",
+                  minHeight: "46px",
+                  padding:
+                    "0 15px 0 44px",
+                  border:
+                    "1px solid #d7e3ea",
+                  borderRadius: "8px",
+                  outline: "none",
+                }}
+              />
+            </div>
 
-            Refresh
-
-          </button>
-
-
+            <button
+              type="button"
+              onClick={
+                loadStudents
+              }
+              style={{
+                minHeight: "46px",
+                padding:
+                  "0 15px",
+                display: "flex",
+                alignItems:
+                  "center",
+                gap: "7px",
+                border:
+                  "1px solid #d7e3ea",
+                borderRadius: "8px",
+                background: "#fff",
+                cursor: "pointer",
+              }}
+            >
+              <RefreshCw
+                size={17}
+              />
+              Refresh
+            </button>
+          </div>
         </section>
 
 
+        {/* STUDENT LIST */}
 
-        {/* =================================================
-            TABLE
-        ================================================= */}
+        <section
+          className="private-student-form-card"
+          style={{
+            marginTop: "20px",
+          }}
+        >
 
-        <section className="private-student-table-card">
-
-
-          <div className="private-table-title">
-
+          <div className="private-form-heading">
             <div>
-
               <span>
                 PRIVATE SCHOOL DATA
               </span>
@@ -2027,45 +1424,42 @@ export default function Students() {
               <h2>
                 Student List
               </h2>
-
             </div>
 
-
             <strong>
-
               {
                 filteredStudents.length
               }{" "}
-
               Records
-
             </strong>
-
           </div>
 
 
-
           {loading ? (
-
-            <div className="private-empty">
-
-              <RefreshCw
-                size={35}
-              />
-
-              <h3>
-                Loading Students...
-              </h3>
-
+            <div
+              style={{
+                padding: "50px",
+                textAlign: "center",
+              }}
+            >
+              Loading students...
             </div>
-
           ) : filteredStudents.length ===
             0 ? (
-
-            <div className="private-empty">
-
+            <div
+              style={{
+                padding:
+                  "60px 20px",
+                textAlign: "center",
+              }}
+            >
               <GraduationCap
-                size={45}
+                size={50}
+                style={{
+                  opacity: 0.35,
+                  marginBottom:
+                    "12px",
+                }}
               />
 
               <h3>
@@ -2073,359 +1467,184 @@ export default function Students() {
               </h3>
 
               <p>
-
-                {search
-                  ? "Search ke according koi student nahi mila."
-                  : "Abhi is school me individual student records add nahi kiye gaye hain."}
-
+                Abhi is school me
+                individual student
+                records available
+                nahi hain.
               </p>
 
-
-              {!search && (
-
-                <button
-                  type="button"
-                  onClick={
-                    openAddStudent
-                  }
-                >
-
-                  <Plus
-                    size={16}
-                  />
-
-                  Add First Student
-
-                </button>
-
-              )}
-
+              <button
+                type="button"
+                className="private-add-button"
+                onClick={
+                  openAddStudent
+                }
+              >
+                <Plus size={17} />
+                Add First Student
+              </button>
             </div>
-
           ) : (
-
-            <div className="private-table-wrapper">
-
-              <table>
-
+            <div
+              style={{
+                overflowX: "auto",
+              }}
+            >
+              <table
+                style={{
+                  width: "100%",
+                  minWidth: "1050px",
+                  borderCollapse:
+                    "collapse",
+                }}
+              >
                 <thead>
-
                   <tr>
-
-                    <th>
-                      #
-                    </th>
-
                     <th>
                       Student
                     </th>
-
                     <th>
                       Class
                     </th>
-
                     <th>
-                      Roll No.
+                      Roll
                     </th>
-
                     <th>
                       Gender
                     </th>
-
                     <th>
-                      DOB
+                      DOB / Age
                     </th>
-
                     <th>
-                      Age
+                      Admission
                     </th>
-
-                    <th>
-                      Admission No.
-                    </th>
-
                     <th>
                       Parent
                     </th>
-
                     <th>
                       Mobile
                     </th>
-
-                    <th>
-                      Address
-                    </th>
-
                     <th>
                       Actions
                     </th>
-
                   </tr>
-
                 </thead>
 
-
                 <tbody>
-
                   {filteredStudents.map(
-                    (
-                      student,
-                      index
-                    ) => (
-
+                    (student) => (
                       <tr
                         key={
                           student.id
                         }
                       >
-
-
-                        {/* SERIAL */}
-
                         <td>
-                          {index + 1}
-                        </td>
-
-
-
-                        {/* NAME */}
-
-                        <td>
-
-                          <div className="principal-person">
-
-                            <div className="principal-avatar">
-
-                              {student.name
-                                .charAt(0)
-                                .toUpperCase() ||
-                                "S"}
-
-                            </div>
-
-
-                            <div>
-
-                              <strong>
-
-                                {
-                                  student.name
-                                }
-
-                              </strong>
-
-                              <small>
-                                Student
-                              </small>
-
-                            </div>
-
-                          </div>
-
-                        </td>
-
-
-
-                        {/* CLASS */}
-
-                        <td>
-
                           <strong>
-
-                            Class{" "}
                             {
-                              student.className
+                              student.name
                             }
-
                           </strong>
-
                         </td>
 
-
-
-                        {/* ROLL */}
+                        <td>
+                          Class{" "}
+                          {
+                            student.className
+                          }
+                        </td>
 
                         <td>
-
                           {student.rollNumber ||
                             "-"}
-
                         </td>
 
-
-
-                        {/* GENDER */}
-
                         <td>
-
-                          {
-                            student.gender ||
-                            "-"
-                          }
-
+                          {student.gender ||
+                            "-"}
                         </td>
 
-
-
-                        {/* DOB */}
-
                         <td>
+                          {student.dob ||
+                            "-"}
+                          <br />
 
-                          <span
-                            style={{
-                              display:
-                                "inline-flex",
-                              alignItems:
-                                "center",
-                              gap: "5px",
-                            }}
-                          >
-
-                            <CalendarDays
-                              size={13}
-                            />
-
-                            {student.dob ||
-                              "-"}
-
-                          </span>
-
+                          <small>
+                            {
+                              student.age
+                            }{" "}
+                            Years
+                          </small>
                         </td>
 
-
-
-                        {/* AGE */}
-
                         <td>
-
-                          {
-                            student.age
-                          }{" "}
-
-                          Years
-
-                        </td>
-
-
-
-                        {/* ADMISSION */}
-
-                        <td>
-
                           {student.admissionNumber ||
                             "-"}
-
                         </td>
 
-
-
-                        {/* PARENT */}
-
                         <td>
-
                           {student.parentName ||
                             "-"}
-
                         </td>
 
-
-
-                        {/* MOBILE */}
-
                         <td>
-
                           {student.mobile ||
                             "-"}
-
                         </td>
 
-
-
-                        {/* ADDRESS */}
-
                         <td>
-
-                          {student.address ||
-                            "-"}
-
-                        </td>
-
-
-
-                        {/* ACTIONS */}
-
-                        <td>
-
-                          <div className="private-table-actions">
-
-
+                          <div
+                            style={{
+                              display:
+                                "flex",
+                              gap:
+                                "7px",
+                            }}
+                          >
                             <button
                               type="button"
-                              className="edit"
-                              title="Edit Student"
                               onClick={() =>
                                 handleEdit(
                                   student
                                 )
                               }
+                              title="Edit"
                             >
-
                               <Edit3
-                                size={15}
+                                size={
+                                  15
+                                }
                               />
-
-                              Edit
-
                             </button>
-
-
 
                             <button
                               type="button"
-                              className="delete"
-                              title="Delete Student"
                               onClick={() =>
                                 handleDelete(
                                   student
                                 )
                               }
+                              title="Delete"
                             >
-
                               <Trash2
-                                size={15}
+                                size={
+                                  15
+                                }
                               />
-
-                              Delete
-
                             </button>
-
-
                           </div>
-
                         </td>
-
-
                       </tr>
-
                     )
                   )}
-
                 </tbody>
-
               </table>
-
             </div>
-
           )}
-
 
         </section>
 
-
       </main>
 
-
     </div>
-
   );
 }

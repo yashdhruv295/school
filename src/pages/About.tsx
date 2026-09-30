@@ -157,7 +157,7 @@ export default function About() {
             <div className="about-stat-box">
               <School size={45} />
 
-              <strong>18</strong>
+              <strong>17</strong>
 
               <span>
                 Total Schools
